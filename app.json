@@ -2,14 +2,14 @@
   "expo": {
     "name": "Insta News Telugu",
     "slug": "telugu-news-mobile",
-    "version": "1.0.1",
+    "version": "1.0.3",
     "orientation": "portrait",
-    "icon": "./assets/images/launcher-icon.png",
+    "icon": "./assets/images/app-icon.png",
     "scheme": "telugu-news-mobile",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "splash": {
-      "image": "./assets/images/native-splash-blank.png",
+      "image": "./assets/images/splash-logo.png",
       "imageWidth": 220,
       "resizeMode": "contain",
       "backgroundColor": "#0B0F14"
@@ -20,10 +20,10 @@
     },
     "android": {
       "package": "com.telugu.enewspaper",
-      "versionCode": 2,
+      "versionCode": 4,
       "adaptiveIcon": {
-        "foregroundImage": "./assets/images/launcher-adaptive-foreground.png",
-        "backgroundColor": "#0B0F14"
+        "foregroundImage": "./assets/images/adaptive-icon-foreground.png",
+        "backgroundColor": "#ffffff"
       },
       "permissions": [
         "android.permission.RECEIVE_BOOT_COMPLETED",
