@@ -1,0 +1,51 @@
+export const lightColors = {
+  bg:            '#f5f5f7',
+  surface:       '#fbfbfd',
+  card:          '#ffffff',
+  textPrimary:   '#111319',
+  textSecondary: '#7a808a',
+  primary:       '#0a9b9a',
+  primaryDark:   '#077c7b',
+  primaryFg:     '#ffffff',
+  primarySoft:   '#d9f3f5',
+  accent:        '#7047c7',
+  accentFg:      '#ffffff',
+  accentSoft:    '#ece5ff',
+  pink:          '#ff4f87',
+  pinkSoft:      '#ffe0ec',
+  muted:         '#f0f1f5',
+  mutedFg:       '#7a808a',
+  destructive:   '#ff4f87',
+  border:        '#eceef3',
+  input:         '#eceef3',
+  success:       '#22c55e',
+  warning:       '#f59e0b',
+} as const;
+
+export const darkColors = {
+  bg:            '#0d0f14',
+  surface:       '#161820',
+  card:          '#1c1e26',
+  textPrimary:   '#e8eaf0',
+  textSecondary: '#868c98',
+  primary:       '#0cc4c2',
+  primaryDark:   '#0a9b9a',
+  primaryFg:     '#ffffff',
+  primarySoft:   '#0a2e2e',
+  accent:        '#8f6fe0',
+  accentFg:      '#ffffff',
+  accentSoft:    '#2a2040',
+  pink:          '#ff6699',
+  pinkSoft:      '#3a1525',
+  muted:         '#252830',
+  mutedFg:       '#868c98',
+  destructive:   '#ff6699',
+  border:        '#252830',
+  input:         '#252830',
+  success:       '#22c55e',
+  warning:       '#f59e0b',
+} as const;
+
+export type ColorToken = {
+  [K in keyof typeof lightColors]: string;
+};
