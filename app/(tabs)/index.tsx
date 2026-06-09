@@ -417,7 +417,10 @@ export default function NewsScreen() {
       )}
 
       {/* ══════════════════ FEED ══════════════════════════════════════════════ */}
-      <View style={styles.feedWrap} onLayout={(e) => setFeedHeight(e.nativeEvent.layout.height)}>
+      <View
+        style={[styles.feedWrap, { paddingTop: feedTop }]}
+        onLayout={(e) => setFeedHeight(e.nativeEvent.layout.height)}
+      >
         {showSpinner ? (
           <View style={styles.center}>
             <View style={styles.statusIconWrap}>
@@ -443,8 +446,8 @@ export default function NewsScreen() {
             key={category}
             data={displayData}
             renderActions={renderActions}
-            cardHeight={feedHeight > 0 ? feedHeight : undefined}
-            contentPaddingTop={feedHeight > 0 ? 0 : feedTop}
+            cardHeight={feedHeight > 0 ? Math.max(320, feedHeight - feedTop) : undefined}
+            contentPaddingTop={0}
             contentPaddingBottom={feedHeight > 0 ? 0 : bottomPad}
             refreshControl={
               <RefreshControl
@@ -455,7 +458,7 @@ export default function NewsScreen() {
               />
             }
             emptyComponent={
-              <View style={[styles.center, { marginTop: feedTop + 60 }]}>
+              <View style={[styles.center, { marginTop: 60 }]}>
                 <View style={styles.statusIconWrap}>
                   <Feather name="inbox" size={22} color="rgba(255,255,255,0.30)" />
                 </View>

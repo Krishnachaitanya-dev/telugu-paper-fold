@@ -6,14 +6,13 @@ test.describe('News browsing', () => {
   test('home screen loads', async ({ page }) => {
     const newsPage = new NewsPage(page);
     await newsPage.goto();
-    await page.waitForLoadState('networkidle');
     await expect(page).toHaveURL('/');
+    await expect(page.getByText('All').first()).toBeVisible({ timeout: 10_000 });
   });
 
   test('home header is hidden and category chips remain available', async ({ page }) => {
     const newsPage = new NewsPage(page);
     await newsPage.goto();
-    await page.waitForLoadState('networkidle');
 
     await expect(page.getByText('INSTA NEWS TELUGU')).toHaveCount(0);
     await expect(page.getByText('All').first()).toBeVisible({ timeout: 10_000 });
@@ -30,8 +29,7 @@ test.describe('News browsing', () => {
 
   test('dark mode does not show white flash', async ({ page }) => {
     await page.emulateMedia({ colorScheme: 'dark' });
-    await page.goto('/');
-    await page.waitForLoadState('networkidle');
+    await page.goto('/', { waitUntil: 'domcontentloaded' });
     const bg = await page.evaluate(() =>
       getComputedStyle(document.body).backgroundColor,
     );

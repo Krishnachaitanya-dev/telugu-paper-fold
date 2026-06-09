@@ -29,6 +29,8 @@ yarn-debug.*
 yarn-error.*
 playwright-report/
 test-results/
+artifacts/
+expo-web.log
 
 # macOS
 .DS_Store

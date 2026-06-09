@@ -12,7 +12,7 @@ export class NewsPage {
   }
 
   async goto() {
-    await this.page.goto('/');
+    await this.page.goto('/', { waitUntil: 'domcontentloaded' });
   }
 
   async openSearch() {

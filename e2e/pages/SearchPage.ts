@@ -14,7 +14,7 @@ export class SearchPage {
   }
 
   async goto() {
-    await this.page.goto('/search');
+    await this.page.goto('/search', { waitUntil: 'domcontentloaded' });
   }
 
   async search(query: string) {

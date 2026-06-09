@@ -15,6 +15,13 @@ type NewsItem = {
   category: string;
 };
 
+type ExistingNewsRow = {
+  id: string;
+  title: string;
+  description: string | null;
+  source_url: string | null;
+};
+
 const allowedOrigin = Deno.env.get("APP_CORS_ORIGIN") ?? "*";
 const corsHeaders = {
   "Access-Control-Allow-Origin": allowedOrigin,
@@ -68,6 +75,80 @@ function truncateWords(s: string, limit = 80) {
   return words.length <= limit ? s.trim() : words.slice(0, limit).join(" ");
 }
 
+function extractReadableText(html: string) {
+  return stripHtml(
+    html
+      .replace(/<script\b[\s\S]*?<\/script>/gi, " ")
+      .replace(/<style\b[\s\S]*?<\/style>/gi, " ")
+      .replace(/<noscript\b[\s\S]*?<\/noscript>/gi, " ")
+      .replace(/<nav\b[\s\S]*?<\/nav>/gi, " ")
+      .replace(/<footer\b[\s\S]*?<\/footer>/gi, " "),
+  );
+}
+
+function extractMetaDescription(html: string) {
+  const meta =
+    html.match(/<meta[^>]+property=["']og:description["'][^>]+content=["']([^"']+)["'][^>]*>/i) ||
+    html.match(/<meta[^>]+name=["']description["'][^>]+content=["']([^"']+)["'][^>]*>/i) ||
+    html.match(/<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:description["'][^>]*>/i) ||
+    html.match(/<meta[^>]+content=["']([^"']+)["'][^>]+name=["']description["'][^>]*>/i);
+  return meta ? stripHtml(meta[1]) : "";
+}
+
+function extractParagraphText(html: string) {
+  const paragraphs = html.match(/<p\b[^>]*>[\s\S]*?<\/p>/gi) ?? [];
+  return paragraphs
+    .map(stripHtml)
+    .filter((text) => wordCount(text) >= 5)
+    .join(" ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function isLikelyNavigationText(text: string) {
+  const lower = text.toLowerCase();
+  return (
+    lower.includes("web stories") ||
+    text.includes("వార్తలు ఆంధ్రప్రదేశ్ తెలంగాణ జాతీయం") ||
+    text.includes("సినిమాలు సినిమా న్యూస్ స్పెషల్స్") ||
+    text.includes("T20 వరల్డ్ కప్")
+  );
+}
+
+async function fetchArticleText(url: string) {
+  try {
+    const res = await fetch(url, {
+      headers: {
+        "User-Agent": "Mozilla/5.0 (compatible; TeluguENewspaperBot/1.0)",
+        Accept: "text/html,application/xhtml+xml",
+      },
+    });
+    if (!res.ok) return "";
+    const html = await res.text();
+    const metaDescription = extractMetaDescription(html);
+    const articleMatch =
+      html.match(/<article\b[\s\S]*?<\/article>/i) ||
+      html.match(/<main\b[\s\S]*?<\/main>/i);
+    const scopedHtml = articleMatch?.[0] ?? html;
+    const paragraphText = extractParagraphText(scopedHtml);
+    if (wordCount(paragraphText) >= 40 && !isLikelyNavigationText(paragraphText)) {
+      return paragraphText.slice(0, 8000);
+    }
+
+    if (articleMatch) {
+      const articleText = extractReadableText(articleMatch[0]);
+      if (wordCount(articleText) >= 40 && !isLikelyNavigationText(articleText)) {
+        return articleText.slice(0, 8000);
+      }
+    }
+
+    return isLikelyNavigationText(metaDescription) ? "" : metaDescription;
+  } catch (e) {
+    console.error("article fetch error", url, e);
+    return "";
+  }
+}
+
 function extractImage(itemXml: string) {
   const media = pickAttr(itemXml, "media:content", "url") || pickAttr(itemXml, "media:thumbnail", "url");
   if (media) return media;
@@ -98,9 +179,10 @@ async function summarize80(text: string) {
         contents: [{
           parts: [{
             text:
-              "Summarize the following news text in 80 words or less. " +
-              "Keep the same language as the input, preserve names and factual claims, " +
-              "and return only the summary.\n\n" +
+              "Write a concise news summary in the same language as the input. " +
+              "Use 75 to 80 words when the source has enough detail, and never exceed 80 words. " +
+              "Preserve names, numbers, places, and factual claims. Do not invent missing details. " +
+              "Return only the summary.\n\n" +
               clean,
           }],
         }],
@@ -123,6 +205,14 @@ async function summarize80(text: string) {
     console.error("Gemini summarize error", e);
     return truncateWords(clean);
   }
+}
+
+async function summarizeFromSource(sourceUrl: string, fallbackText: string | null, title?: string | null) {
+  const fallback = fallbackText ? stripHtml(fallbackText) : "";
+  const article = await fetchArticleText(sourceUrl);
+  const safeFallback = isLikelyNavigationText(fallback) ? (title ?? "") : fallback;
+  const sourceText = wordCount(article) >= 40 ? article : safeFallback;
+  return sourceText ? await summarize80(sourceText) : null;
 }
 
 async function parseFeed(feedUrl: string, sourceName: string, category: string, limit: number) {
@@ -154,7 +244,7 @@ async function parseFeed(feedUrl: string, sourceName: string, category: string, 
 
     items.push({
       title: stripHtml(title).slice(0, 280),
-      description: desc ? await summarize80(desc) : null,
+      description: await summarizeFromSource(link.trim(), desc, title),
       image_url: image,
       source_url: link.trim(),
       source_name: sourceName,
@@ -165,6 +255,43 @@ async function parseFeed(feedUrl: string, sourceName: string, category: string, 
   }
 
   return items;
+}
+
+async function backfillRecentSummaries(
+  supabase: ReturnType<typeof createClient>,
+  limit: number,
+) {
+  if (limit <= 0) return { checked: 0, updated: 0 };
+
+  const { data, error } = await supabase
+    .from("news_updates")
+    .select("id, title, description, source_url")
+    .not("source_url", "is", null)
+    .gte("created_at", new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString())
+    .order("created_at", { ascending: false })
+    .limit(limit);
+
+  if (error) throw error;
+
+  let updated = 0;
+  for (const row of (data || []) as ExistingNewsRow[]) {
+    const currentWords = wordCount(row.description ?? "");
+    const isCleanTargetLength = currentWords >= 75 && currentWords <= 80;
+    if (!row.source_url || (isCleanTargetLength && !isLikelyNavigationText(row.description ?? ""))) continue;
+
+    const summary = await summarizeFromSource(row.source_url, row.description, row.title);
+    if (!summary || summary === row.description) continue;
+
+    const { error: updateError } = await supabase
+      .from("news_updates")
+      .update({ description: summary })
+      .eq("id", row.id);
+
+    if (updateError) throw updateError;
+    updated += 1;
+  }
+
+  return { checked: data?.length ?? 0, updated };
 }
 
 Deno.serve(async (req) => {
@@ -182,6 +309,7 @@ Deno.serve(async (req) => {
 
     const requestBody = req.method === "POST" ? await req.json().catch(() => ({})) : {};
     const limitPerFeed = Math.max(1, Math.min(Number(requestBody.limitPerFeed ?? 25), 50));
+    const backfillLimit = Math.max(0, Math.min(Number(requestBody.backfillLimit ?? 50), 200));
     const dryRun = Boolean(requestBody.dryRun);
 
     const supabase = createClient(supabaseUrl, serviceRoleKey);
@@ -227,12 +355,17 @@ Deno.serve(async (req) => {
     const cutoff = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
     if (!dryRun) await supabase.from("news_updates").delete().lt("created_at", cutoff);
 
+    const backfill = dryRun
+      ? { checked: 0, updated: 0 }
+      : await backfillRecentSummaries(supabase, backfillLimit);
+
     return json({
       ok: true,
       feeds: sources?.length ?? 0,
       fetched: all.length,
       unique: unique.length,
       inserted,
+      backfill,
       dryRun,
       summarizedBy: Deno.env.get("GEMINI_API_KEY") ? GEMINI_MODEL : "local-truncate-fallback",
     });
