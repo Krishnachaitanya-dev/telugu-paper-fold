@@ -80,7 +80,7 @@ function AnimatedNewsCardBase({ item, shouldLoadImage, height, renderActions }: 
   const time     = item.created_at ? timeAgo(item.created_at) : "";
   const summaryText = getPreprocessedSummary(item.description);
 
-  const IMAGE_H = height ? Math.round(height * 0.50) : IMAGE_H_DEFAULT;
+  const IMAGE_H = height ? Math.round(height * 0.44) : IMAGE_H_DEFAULT;
 
   const handlePress = useCallback(() => {
     router.push(`/news/${item.id}` as never);
@@ -232,6 +232,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#111820",
     borderBottomWidth: 8,
     borderBottomColor: "#0d1320",
+    overflow: "hidden",
   },
   cardPressed: { opacity: 0.94 },
 

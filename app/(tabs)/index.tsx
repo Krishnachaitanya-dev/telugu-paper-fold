@@ -41,6 +41,27 @@ const CATEGORIES = [...NEWS_CATEGORIES];
 const SORT_OPTIONS = ["Latest", "Trending", "Most liked"] as const;
 type SortOption = (typeof SORT_OPTIONS)[number];
 
+function normalizeSourceName(name: string) {
+  return name
+    .toLowerCase()
+    .replace(/telugu|news|tv|channel|live/g, "")
+    .replace(/[^a-z0-9]+/g, "");
+}
+
+function sourceLogoAliases(sourceName: string) {
+  const normalized = normalizeSourceName(sourceName);
+  const aliases = new Set([sourceName.toLowerCase(), normalized]);
+
+  if (normalized.includes("v6") || normalized.includes("velugu")) aliases.add("v6");
+  if (normalized.includes("10")) aliases.add("10");
+  if (normalized.includes("ntv")) aliases.add("ntv");
+  if (normalized.includes("tv9")) aliases.add("9");
+  if (normalized.includes("abn") || normalized.includes("andhrajyothy")) aliases.add("abn");
+  if (normalized.includes("sakshi")) aliases.add("sakshi");
+
+  return aliases;
+}
+
 // ─── Action Bar ───────────────────────────────────────────────────────────────
 
 const ActionBar = memo(function ActionBar({ item }: { item: NewsUpdate }) {
@@ -311,7 +332,17 @@ export default function NewsScreen() {
   const channelLogoMap = useMemo(() => {
     const map: Record<string, string> = {};
     liveChannels?.forEach((ch) => {
-      if (ch.logo_url) map[ch.channel_name.toLowerCase()] = ch.logo_url;
+      if (!ch.logo_url) return;
+      const normalized = normalizeSourceName(ch.channel_name);
+      map[ch.channel_name.toLowerCase()] = ch.logo_url;
+      map[normalized] = ch.logo_url;
+
+      if (normalized.includes("v6")) map.v6 = ch.logo_url;
+      if (normalized.includes("10")) map["10"] = ch.logo_url;
+      if (normalized.includes("ntv")) map.ntv = ch.logo_url;
+      if (normalized.includes("9")) map["9"] = ch.logo_url;
+      if (normalized.includes("abn")) map.abn = ch.logo_url;
+      if (normalized.includes("sakshi")) map.sakshi = ch.logo_url;
     });
     return map;
   }, [liveChannels]);
@@ -325,7 +356,11 @@ export default function NewsScreen() {
       ...item,
       reporter_avatar_url:
         item.reporter_avatar_url ??
-        (item.source_name ? (channelLogoMap[item.source_name.toLowerCase()] ?? null) : null),
+        (item.source_name
+          ? Array.from(sourceLogoAliases(item.source_name))
+              .map((alias) => channelLogoMap[alias])
+              .find(Boolean) ?? null
+          : null),
     })),
     [rawData, channelLogoMap]
   );
