@@ -24,6 +24,7 @@ export type Database = {
           id: string
           is_active: boolean
           logo_text: string
+          logo_url: string | null
           official_url: string
           sort_order: number
           video_id: string | null
@@ -37,6 +38,7 @@ export type Database = {
           id?: string
           is_active?: boolean
           logo_text: string
+          logo_url?: string | null
           official_url: string
           sort_order?: number
           video_id?: string | null
@@ -50,6 +52,7 @@ export type Database = {
           id?: string
           is_active?: boolean
           logo_text?: string
+          logo_url?: string | null
           official_url?: string
           sort_order?: number
           video_id?: string | null
@@ -65,6 +68,7 @@ export type Database = {
           id: string
           image_url: string | null
           reporter_avatar_url: string | null
+          reporter_id: string | null
           reporter_name: string | null
           source_name: string | null
           source_url: string | null
@@ -78,6 +82,7 @@ export type Database = {
           id?: string
           image_url?: string | null
           reporter_avatar_url?: string | null
+          reporter_id?: string | null
           reporter_name?: string | null
           source_name?: string | null
           source_url?: string | null
@@ -91,6 +96,7 @@ export type Database = {
           id?: string
           image_url?: string | null
           reporter_avatar_url?: string | null
+          reporter_id?: string | null
           reporter_name?: string | null
           source_name?: string | null
           source_url?: string | null
@@ -100,36 +106,60 @@ export type Database = {
       }
       reels: {
         Row: {
+          aspect_ratio: string | null
           category: string
           channel: string
           created_at: string
+          duration_seconds: number | null
           id: string
           is_short: boolean
+          reporter_avatar_url: string | null
+          reporter_id: string | null
           reporter_name: string | null
+          sort_order: number | null
+          source_url: string | null
+          tag: string | null
           thumbnail_url: string | null
           title: string
+          video_id: string | null
           youtube_id: string
         }
         Insert: {
+          aspect_ratio?: string | null
           category: string
           channel: string
           created_at?: string
+          duration_seconds?: number | null
           id?: string
           is_short?: boolean
+          reporter_avatar_url?: string | null
+          reporter_id?: string | null
           reporter_name?: string | null
+          sort_order?: number | null
+          source_url?: string | null
+          tag?: string | null
           thumbnail_url?: string | null
           title: string
+          video_id?: string | null
           youtube_id: string
         }
         Update: {
+          aspect_ratio?: string | null
           category?: string
           channel?: string
           created_at?: string
+          duration_seconds?: number | null
           id?: string
           is_short?: boolean
+          reporter_avatar_url?: string | null
+          reporter_id?: string | null
           reporter_name?: string | null
+          sort_order?: number | null
+          source_url?: string | null
+          tag?: string | null
           thumbnail_url?: string | null
           title?: string
+          video_id?: string | null
           youtube_id?: string
         }
         Relationships: []
