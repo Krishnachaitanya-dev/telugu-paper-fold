@@ -93,14 +93,20 @@ export default function RootLayout() {
   const [showSplash, setShowSplash] = useState(true);
 
   useEffect(() => {
-    // If icon fonts don't load within 5s, mark failed so SafeIcon swaps to SVG fallbacks.
+    // Hard cap: never block the app on fonts for more than 5s.
     const failTimer = setTimeout(() => {
-      if (!fontsLoaded) setIconFontStatus("failed");
+      if (!fontsLoaded) {
+        setIconFontStatus("failed");
+        SplashScreen.hideAsync().catch(() => {});
+        setShowSplash(false);
+      }
     }, 5000);
-    if (!fontsLoaded) return () => clearTimeout(failTimer);
 
-    setIconFontStatus("loaded");
-    SplashScreen.hideAsync().catch(() => {});
+    if (fontsLoaded) {
+      setIconFontStatus("loaded");
+      SplashScreen.hideAsync().catch(() => {});
+    }
+
     const timer = setTimeout(() => setShowSplash(false), SPLASH_DURATION_MS);
     return () => {
       clearTimeout(timer);
