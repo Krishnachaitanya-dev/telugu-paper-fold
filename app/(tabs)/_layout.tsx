@@ -59,7 +59,7 @@ function TabIcon({
 function NewsTabIcon({ color, focused }: { color: string; focused: boolean }) {
   return (
     <View style={[styles.newsIconWrap, focused && styles.newsIconWrapActive]}>
-      <Feather name="book-open" size={20} color={color} />
+      <SafeIcon name="book-open" size={20} color={color} />
     </View>
   );
 }
