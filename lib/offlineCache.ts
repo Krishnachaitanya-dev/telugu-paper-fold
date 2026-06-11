@@ -1,11 +1,20 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import type { NewsUpdate, Reel } from "./supabase";
 import { filterNewsByCategory } from "./newsCategories";
+import { env } from "@/core/env/env";
 
-const CACHE_KEY = "offline_news_v2";
-const CACHE_TS_KEY = "offline_news_ts_v2";
-const REELS_CACHE_KEY = "offline_reels_v1";
-const REELS_CACHE_TS_KEY = "offline_reels_ts_v1";
+// Namespace cache keys by Supabase host so switching projects (or .env
+// changes) automatically invalidates stale cached data instead of serving
+// the previous backend's content from AsyncStorage.
+const HOST = (() => {
+  try { return new URL(env.supabaseUrl).host.split(".")[0] || "default"; }
+  catch { return "default"; }
+})();
+
+const CACHE_KEY = `offline_news_v2:${HOST}`;
+const CACHE_TS_KEY = `offline_news_ts_v2:${HOST}`;
+const REELS_CACHE_KEY = `offline_reels_v1:${HOST}`;
+const REELS_CACHE_TS_KEY = `offline_reels_ts_v1:${HOST}`;
 const MAX_ARTICLES = 200;
 const MAX_REELS = 80;
 
