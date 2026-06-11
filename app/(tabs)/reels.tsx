@@ -572,6 +572,8 @@ export default function ReelsScreen() {
     [cardHeight]
   );
 
+  console.log(`[Reels] render — items=${displayData.length} loading=${isLoading} error=${!!error} cache=${cache.reels.length}`);
+
   if ((!cacheLoaded || isLoading) && sourceData.length === 0) {
     return (
       <View style={[styles.fullCenter, { backgroundColor: "#0a0c10" }]}>
@@ -589,7 +591,8 @@ export default function ReelsScreen() {
         <View style={[styles.statusIconWrap, { backgroundColor: "rgba(255,79,135,0.12)" }]}>
           <Feather name="alert-circle" size={26} color="#ff4f87" />
         </View>
-        <Text style={styles.errorText}>Failed to load</Text>
+        <Text style={styles.errorText}>Couldn't load reels</Text>
+        <Text style={styles.loadingText}>Check your connection and try again.</Text>
         <TouchableOpacity style={styles.retryBtn} onPress={() => refetch()} activeOpacity={0.8}>
           <Text style={styles.retryBtnText}>Retry</Text>
         </TouchableOpacity>
