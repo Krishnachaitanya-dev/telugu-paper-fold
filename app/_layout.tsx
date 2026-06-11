@@ -82,13 +82,21 @@ function RootLayoutNav() {
 export default function RootLayout() {
   const foregroundSub = useRef<NotifSubscription | null>(null);
   const responseSub = useRef<NotifSubscription | null>(null);
+  const [fontsLoaded] = useFonts({
+    ...Feather.font,
+    ...MaterialCommunityIcons.font,
+    ...Ionicons.font,
+    ...MaterialIcons.font,
+    ...FontAwesome.font,
+  });
   const [showSplash, setShowSplash] = useState(true);
 
   useEffect(() => {
+    if (!fontsLoaded) return;
     SplashScreen.hideAsync().catch(() => {});
     const timer = setTimeout(() => setShowSplash(false), SPLASH_DURATION_MS);
     return () => clearTimeout(timer);
-  }, []);
+  }, [fontsLoaded]);
 
   useEffect(() => {
     // Skip all notification setup when running inside Expo Go.
