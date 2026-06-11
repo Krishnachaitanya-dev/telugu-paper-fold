@@ -1,10 +1,10 @@
 import { Tabs, router, usePathname } from "expo-router";
-import { Feather } from "@expo/vector-icons";
 import React, { useMemo } from "react";
 import { Image, PanResponder, Platform, StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { useColors } from "@/hooks/useColors";
+import { SafeIcon } from "@/components/SafeIcon";
 
 const TAB_ICONS = {
   reels:   require("../../assets/tab-icons/icon-reels.png"),
