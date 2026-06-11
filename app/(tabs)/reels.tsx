@@ -602,31 +602,8 @@ export default function ReelsScreen() {
         top={topPad + HEADER_H}
       />
 
-      {/* Content type chips */}
-      <View style={[styles.contentBar, { top: topPad + HEADER_H + CHIP_BAR_H }]}>
-        <FlatList
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          data={CONTENT_FILTERS}
-          keyExtractor={(f) => f}
-          contentContainerStyle={styles.contentBarRow}
-          renderItem={({ item }) => {
-            const active = item === contentFilter;
-            return (
-              <TouchableOpacity
-                onPress={() => { setContentFilter(item); setCurrentIndex(0); }}
-                activeOpacity={0.75}
-                style={styles.contentChipWrap}
-              >
-                <Text style={[styles.contentChipText, { color: active ? "#0a9b9a" : "rgba(255,255,255,0.45)" }]}>
-                  {item}
-                </Text>
-                {active ? <View style={styles.contentChipUnderline} /> : null}
-              </TouchableOpacity>
-            );
-          }}
-        />
-      </View>
+      {/* (Secondary content type chips removed — too much chrome over the video) */}
+
 
       <ChannelPicker
         visible={channelPickerOpen}
