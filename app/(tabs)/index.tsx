@@ -323,14 +323,20 @@ export default function NewsScreen() {
   const feedTop    = chipBarTop + CHIP_H;
   const bottomPad  = insets.bottom + (Platform.OS === "web" ? 84 : 100);
 
-  const { data: freshData, isLoading, isError, refetch } = useQuery({
+  useEffect(() => { console.log("[News] screen mounted"); }, []);
+
+  const { data: freshData, isLoading, isError, error, refetch } = useQuery({
     queryKey: ["news", category, followedReporterIds.join(",")],
     queryFn: async () => {
+      console.log("[News] queryFn start", { category, followedCount: followedReporterIds.length });
+      const t0 = Date.now();
       const articles = await db.fetchNews(category, followedReporterIds);
+      console.log(`[News] fetched ${articles.length} articles in ${Date.now() - t0}ms`);
       if (articles.length > 0) {
         const merged = Array.from(
           new Map([...articles, ...cache.articles].map((x) => [x.id, x])).values()
         );
+        console.log(`[News] merging + caching ${merged.length} (cache had ${cache.articles.length})`);
         cacheNews(merged).then(() => setCache({ articles: merged, cachedAt: new Date() }));
       }
       return articles;
@@ -342,6 +348,10 @@ export default function NewsScreen() {
     refetchOnReconnect: true,
     retry: 1,
   });
+
+  useEffect(() => {
+    if (isError) console.warn("[News] query error:", error);
+  }, [isError, error]);
 
   const { data: liveChannels } = useQuery({
     queryKey: ["live-channels"],
@@ -388,7 +398,12 @@ export default function NewsScreen() {
   const showSpinner = (!cacheLoaded || isLoading) && cache.articles.length === 0 && !freshData;
   const showError   = isError && cache.articles.length === 0;
 
+  useEffect(() => {
+    console.log(`[News] render — items=${displayData.length} loading=${isLoading} error=${isError} cache=${cache.articles.length}`);
+  }, [displayData.length, isLoading, isError, cache.articles.length]);
+
   const onRefresh = useCallback(async () => {
+    console.log("[News] pull-to-refresh");
     setRefreshing(true);
     await refetch();
     setRefreshing(false);
@@ -543,10 +558,20 @@ export default function NewsScreen() {
             emptyComponent={
               <View style={[styles.center, { marginTop: 60 }]}>
                 <View style={styles.statusIconWrap}>
-                  <Feather name="inbox" size={22} color="rgba(255,255,255,0.30)" />
+                  <Feather name="inbox" size={24} color="#0a9b9a" />
                 </View>
-                <Text style={styles.emptyTitle}>No articles here yet</Text>
-                <Text style={styles.emptySub}>Try a different category</Text>
+                <Text style={styles.emptyTitle}>No stories to show</Text>
+                <Text style={styles.emptySub}>
+                  Pull down to refresh or pick another{"\n"}category — we'll bring the latest in.
+                </Text>
+                <TouchableOpacity
+                  style={styles.retryBtn}
+                  onPress={() => { console.log("[News] empty Retry tapped"); refetch(); }}
+                  activeOpacity={0.8}
+                  accessibilityRole="button"
+                >
+                  <Text style={styles.retryBtnText}>Retry</Text>
+                </TouchableOpacity>
               </View>
             }
           />

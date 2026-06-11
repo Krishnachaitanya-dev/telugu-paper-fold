@@ -21,6 +21,7 @@ import { env } from "@/core/env/env";
 import { backoffWithJitter } from "@/core/resilience/backoff";
 import { ToastProvider } from "@/shared/feedback/ToastProvider";
 import { setIconFontStatus } from "@/lib/iconFontStatus";
+import { getTabMountStatus, subscribeTabMountStatus } from "@/lib/tabMountStatus";
 
 // Initialize Sentry before any rendering
 if (env.sentryDsn && !__DEV__) {
@@ -91,6 +92,36 @@ export default function RootLayout() {
     ...FontAwesome.font,
   });
   const [showSplash, setShowSplash] = useState(true);
+  const [showNavFallback, setShowNavFallback] = useState(false);
+
+  // ─── Lifecycle log: confirm RootLayout mounted ────────────────────────────
+  useEffect(() => {
+    console.log("[Lifecycle] RootLayout mounted");
+    return () => console.log("[Lifecycle] RootLayout unmounted");
+  }, []);
+
+  // ─── Nav watchdog: if splash dismissed but no tab screen mounted, show fallback
+  useEffect(() => {
+    if (showSplash) return;
+    console.log("[Lifecycle] splash dismissed, waiting for tab mount…");
+    if (getTabMountStatus() === "mounted") {
+      console.log("[Lifecycle] tabs already mounted");
+      return;
+    }
+    const unsub = subscribeTabMountStatus((s) => {
+      if (s === "mounted") setShowNavFallback(false);
+    });
+    const watchdog = setTimeout(() => {
+      if (getTabMountStatus() !== "mounted") {
+        console.warn("[Lifecycle] tab navigator never mounted after 4s — showing fallback");
+        setShowNavFallback(true);
+      }
+    }, 4000);
+    return () => {
+      unsub();
+      clearTimeout(watchdog);
+    };
+  }, [showSplash]);
 
   useEffect(() => {
     // Hard cap: never block the app on fonts for more than 5s.
@@ -167,6 +198,7 @@ export default function RootLayout() {
               <ToastProvider>
                 <RootLayoutNav />
                 {showSplash ? <BrandedSplash /> : null}
+                {!showSplash && showNavFallback ? <NavFallback /> : null}
               </ToastProvider>
             </KeyboardProvider>
           </GestureHandlerRootView>
@@ -227,6 +259,24 @@ function BrandedSplash() {
   );
 }
 
+function NavFallback() {
+  return (
+    <View style={styles.fallbackOverlay}>
+      <Text style={styles.fallbackTitle}>Taking longer than expected</Text>
+      <Text style={styles.fallbackSub}>
+        The app is having trouble loading the main screen. Check your connection and try again.
+      </Text>
+      <Text
+        style={styles.fallbackBtn}
+        onPress={() => router.replace("/(tabs)" as never)}
+        accessibilityRole="button"
+      >
+        Reload
+      </Text>
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
   splashOverlay: {
     ...StyleSheet.absoluteFillObject,
@@ -261,5 +311,28 @@ const styles = StyleSheet.create({
     fontWeight: "800",
     textAlign: "center",
     letterSpacing: 0,
+  },
+  fallbackOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    zIndex: 998,
+    elevation: 998,
+    backgroundColor: "#0d1320",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 32,
+    gap: 12,
+  },
+  fallbackTitle: { color: "#fff", fontSize: 18, fontWeight: "800", textAlign: "center" },
+  fallbackSub: { color: "rgba(255,255,255,0.6)", fontSize: 13, textAlign: "center", lineHeight: 19 },
+  fallbackBtn: {
+    marginTop: 14,
+    backgroundColor: "#0a9b9a",
+    color: "#fff",
+    fontSize: 14,
+    fontWeight: "800",
+    paddingHorizontal: 28,
+    paddingVertical: 12,
+    borderRadius: 8,
+    overflow: "hidden",
   },
 });

@@ -1,9 +1,10 @@
 import { Tabs, router, usePathname } from "expo-router";
-import React, { useMemo } from "react";
+import React, { useEffect, useMemo } from "react";
 import { Image, PanResponder, Platform, StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { useColors } from "@/hooks/useColors";
+import { markTabsMounted } from "@/lib/tabMountStatus";
 
 const TAB_ICONS = {
   news:    require("../../assets/tab-icons/icon-news.png"),
@@ -75,6 +76,8 @@ export default function TabLayout() {
   const insets  = useSafeAreaInsets();
   const pathname = usePathname();
   const isWeb   = Platform.OS === "web";
+
+  useEffect(() => { markTabsMounted("TabLayout"); }, []);
 
   const safeBottom  = isWeb ? 0 : Math.max(insets.bottom, Platform.OS === "android" ? 20 : 0);
   const tabBarHeight = isWeb ? 84 : 58 + safeBottom;

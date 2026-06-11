@@ -12,6 +12,7 @@ import {
   Modal,
   Platform,
   Pressable,
+  RefreshControl,
   Share,
   StyleSheet,
   Text,
@@ -422,6 +423,9 @@ export default function ReelsScreen() {
   const [followedReporterIds, setFollowedReporterIds] = useState<string[]>([]);
   const [cache, setCache] = useState<ReelsCacheResult>({ reels: [], cachedAt: null });
   const [cacheLoaded, setCacheLoaded] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+
+  useEffect(() => { console.log("[Reels] screen mounted"); }, []);
 
   const topPad = Platform.OS === "web" ? 67 : insets.top;
   const HEADER_H = 46;
@@ -448,7 +452,10 @@ export default function ReelsScreen() {
   const { data, isLoading, error, refetch } = useQuery({
     queryKey: ["reels"],
     queryFn: async () => {
+      console.log("[Reels] queryFn start");
+      const t0 = Date.now();
       const reels = await db.fetchReels();
+      console.log(`[Reels] fetched ${reels.length} reels in ${Date.now() - t0}ms`);
       if (reels.length > 0) {
         cacheReels(reels).then(() => setCache({ reels, cachedAt: new Date() }));
       }
@@ -460,6 +467,16 @@ export default function ReelsScreen() {
     refetchOnReconnect: false,
     retry: 1,
   });
+
+  useEffect(() => {
+    if (error) console.warn("[Reels] query error:", error);
+  }, [error]);
+
+  const onRefresh = useCallback(async () => {
+    console.log("[Reels] pull-to-refresh");
+    setRefreshing(true);
+    try { await refetch(); } finally { setRefreshing(false); }
+  }, [refetch]);
 
   const sourceData = data !== undefined ? data : cache.reels;
   const portraitData = useMemo(() => sourceData.filter(isPortraitReel), [sourceData]);
@@ -555,6 +572,8 @@ export default function ReelsScreen() {
     [cardHeight]
   );
 
+  console.log(`[Reels] render — items=${displayData.length} loading=${isLoading} error=${!!error} cache=${cache.reels.length}`);
+
   if ((!cacheLoaded || isLoading) && sourceData.length === 0) {
     return (
       <View style={[styles.fullCenter, { backgroundColor: "#0a0c10" }]}>
@@ -572,7 +591,8 @@ export default function ReelsScreen() {
         <View style={[styles.statusIconWrap, { backgroundColor: "rgba(255,79,135,0.12)" }]}>
           <Feather name="alert-circle" size={26} color="#ff4f87" />
         </View>
-        <Text style={styles.errorText}>Failed to load</Text>
+        <Text style={styles.errorText}>Couldn't load reels</Text>
+        <Text style={styles.loadingText}>Check your connection and try again.</Text>
         <TouchableOpacity style={styles.retryBtn} onPress={() => refetch()} activeOpacity={0.8}>
           <Text style={styles.retryBtnText}>Retry</Text>
         </TouchableOpacity>
@@ -644,12 +664,31 @@ export default function ReelsScreen() {
         maxToRenderPerBatch={2}
         windowSize={4}
         updateCellsBatchingPeriod={40}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor="#0a9b9a"
+            colors={["#0a9b9a"]}
+            progressViewOffset={topPad + HEADER_H + CHIP_BAR_H}
+          />
+        }
         ListEmptyComponent={
-          <View style={[styles.fullCenter, { backgroundColor: "#0a0c10" }]}>
+          <View style={[styles.fullCenter, { backgroundColor: "#0a0c10", paddingTop: 120 }]}>
             <View style={styles.statusIconWrap}>
-              <Feather name="video-off" size={24} color="rgba(255,255,255,0.3)" />
+              <Feather name="video-off" size={24} color="#0a9b9a" />
             </View>
-            <Text style={styles.emptyText}>No reels here</Text>
+            <Text style={styles.errorText}>No reels to show</Text>
+            <Text style={styles.loadingText}>
+              Pull down to refresh or pick another filter.
+            </Text>
+            <TouchableOpacity
+              style={styles.retryBtn}
+              onPress={() => { console.log("[Reels] empty Retry tapped"); refetch(); }}
+              activeOpacity={0.8}
+            >
+              <Text style={styles.retryBtnText}>Retry</Text>
+            </TouchableOpacity>
           </View>
         }
       />
