@@ -4,9 +4,9 @@ import { Image, PanResponder, Platform, StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { useColors } from "@/hooks/useColors";
-import { SafeIcon } from "@/components/SafeIcon";
 
 const TAB_ICONS = {
+  news:    require("../../assets/tab-icons/icon-news.png"),
   reels:   require("../../assets/tab-icons/icon-reels.png"),
   live:    require("../../assets/tab-icons/icon-live.png"),
   chat:    require("../../assets/tab-icons/icon-chat.png"),
@@ -58,8 +58,12 @@ function TabIcon({
 
 function NewsTabIcon({ color, focused }: { color: string; focused: boolean }) {
   return (
-    <View style={[styles.newsIconWrap, focused && styles.newsIconWrapActive]}>
-      <SafeIcon name="book-open" size={20} color={color} />
+    <View style={[styles.iconWrap, focused && styles.iconWrapActive]}>
+      <Image
+        source={TAB_ICONS.news}
+        resizeMode="contain"
+        style={[styles.tabIcon, { width: 24, height: 24, tintColor: color }]}
+      />
     </View>
   );
 }

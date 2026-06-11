@@ -165,14 +165,13 @@ const SideActions = memo(function SideActions({
           <View style={[styles.sideBtnIcon, disliked && styles.sideBtnIconDislike]}>
             <Feather name="thumbs-down" size={20} color={disliked ? "#ff9f40" : "#fff"} />
           </View>
-          <Text style={styles.sideBtnLabel}>Dislike</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity onPress={handleWhatsApp} style={styles.sideBtn} activeOpacity={0.75}>
+        <TouchableOpacity onPress={handleShareToChat} style={styles.sideBtn} activeOpacity={0.75}>
           <View style={styles.sideBtnIcon}>
-            <MaterialCommunityIcons name="whatsapp" size={22} color="#25D366" />
+            <Feather name="message-circle" size={20} color="#fff" />
           </View>
-          <Text style={styles.sideBtnLabel}>WhatsApp</Text>
+          <Text style={styles.sideBtnLabel}>Chat</Text>
         </TouchableOpacity>
 
         <TouchableOpacity onPress={handleShare} style={styles.sideBtn} activeOpacity={0.75}>
@@ -182,18 +181,10 @@ const SideActions = memo(function SideActions({
           <Text style={styles.sideBtnLabel}>Share</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity onPress={handleShareToChat} style={styles.sideBtn} activeOpacity={0.75}>
+        <TouchableOpacity onPress={handleWhatsApp} style={styles.sideBtn} activeOpacity={0.75}>
           <View style={styles.sideBtnIcon}>
-            <Feather name="send" size={20} color="#fff" />
+            <MaterialCommunityIcons name="whatsapp" size={22} color="#25D366" />
           </View>
-          <Text style={styles.sideBtnLabel}>Chat</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity onPress={() => setPollOpen(true)} style={styles.sideBtn} activeOpacity={0.75}>
-          <View style={[styles.sideBtnIcon, styles.sideBtnIconPoll]}>
-            <Feather name="bar-chart-2" size={20} color="#0a9b9a" />
-          </View>
-          <Text style={[styles.sideBtnLabel, { color: "#0a9b9a" }]}>Poll</Text>
         </TouchableOpacity>
 
         {reel.reporter_id && !isSelfReporter ? (
@@ -201,19 +192,13 @@ const SideActions = memo(function SideActions({
             <View style={[styles.sideBtnIcon, following && styles.sideBtnIconFollow]}>
               <Feather name={following ? "user-check" : "user-plus"} size={20} color={following ? "#0a9b9a" : "#fff"} />
             </View>
-            <Text style={[styles.sideBtnLabel, following && { color: "#0a9b9a" }]}>
-              {following ? "Following" : "Follow"}
-            </Text>
           </TouchableOpacity>
         ) : null}
 
-        <TouchableOpacity onPress={onToggleMute} style={styles.sideBtn} activeOpacity={0.75}>
-          <View style={[styles.sideBtnIcon, muted && styles.sideBtnIconMuted]}>
-            <Feather name={muted ? "volume-x" : "volume-2"} size={22} color={muted ? "#ff9f40" : "#fff"} />
+        <TouchableOpacity onPress={() => setPollOpen(true)} style={styles.sideBtn} activeOpacity={0.75}>
+          <View style={[styles.sideBtnIcon, styles.sideBtnIconPoll]}>
+            <Feather name="bar-chart-2" size={20} color="#0a9b9a" />
           </View>
-          <Text style={[styles.sideBtnLabel, muted && { color: "#ff9f40" }]}>
-            {muted ? "Unmute" : "Sound"}
-          </Text>
         </TouchableOpacity>
       </View>
 
@@ -276,11 +261,25 @@ const ReelCard = memo(function ReelCard({
       )}
 
       <LinearGradient
-        colors={["transparent", "rgba(0,0,0,0.55)", "rgba(0,0,0,0.88)"]}
-        locations={[0.45, 0.72, 1]}
+        colors={["transparent", "rgba(0,0,0,0.78)"]}
+        locations={[0.55, 1]}
         style={StyleSheet.absoluteFill}
         pointerEvents="none"
       />
+
+      {/* Floating mute toggle — top right */}
+      {isVisible ? (
+        <TouchableOpacity
+          onPress={toggleMute}
+          activeOpacity={0.75}
+          style={[styles.muteFloat, { top: insets.top + 56 }]}
+          accessibilityRole="button"
+          accessibilityLabel={muted ? "Unmute" : "Mute"}
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+        >
+          <Feather name={muted ? "volume-x" : "volume-2"} size={18} color="#fff" />
+        </TouchableOpacity>
+      ) : null}
 
       {isVisible && <SideActions reel={reel} muted={muted} onToggleMute={toggleMute} />}
 
@@ -603,31 +602,8 @@ export default function ReelsScreen() {
         top={topPad + HEADER_H}
       />
 
-      {/* Content type chips */}
-      <View style={[styles.contentBar, { top: topPad + HEADER_H + CHIP_BAR_H }]}>
-        <FlatList
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          data={CONTENT_FILTERS}
-          keyExtractor={(f) => f}
-          contentContainerStyle={styles.contentBarRow}
-          renderItem={({ item }) => {
-            const active = item === contentFilter;
-            return (
-              <TouchableOpacity
-                onPress={() => { setContentFilter(item); setCurrentIndex(0); }}
-                activeOpacity={0.75}
-                style={styles.contentChipWrap}
-              >
-                <Text style={[styles.contentChipText, { color: active ? "#0a9b9a" : "rgba(255,255,255,0.45)" }]}>
-                  {item}
-                </Text>
-                {active ? <View style={styles.contentChipUnderline} /> : null}
-              </TouchableOpacity>
-            );
-          }}
-        />
-      </View>
+      {/* (Secondary content type chips removed — too much chrome over the video) */}
+
 
       <ChannelPicker
         visible={channelPickerOpen}
@@ -869,12 +845,27 @@ const styles = StyleSheet.create({
   },
   channelOptionTextActive: { color: "#fff" },
 
+  // Floating mute toggle (top-right of reel)
+  muteFloat: {
+    position: "absolute",
+    right: 14,
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: "rgba(0,0,0,0.55)",
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: "rgba(255,255,255,0.18)",
+    zIndex: 25,
+  },
+
   // Side action buttons
   sideActions: {
     position: "absolute",
     right: 14,
     bottom: 200,
-    gap: 20,
+    gap: 16,
     alignItems: "center",
     zIndex: 5,
   },

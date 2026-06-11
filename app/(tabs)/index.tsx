@@ -20,6 +20,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { NewspaperFeed } from "@/components/news/NewspaperFeed";
+import { NewsCardSkeleton } from "@/shared/skeleton/NewsCardSkeleton";
 import { SpeedNewsCard, type SpeedNewsItem } from "@/components/news/SpeedNewsCard";
 import { db, type NewsUpdate } from "@/lib/supabase";
 import {
@@ -35,8 +36,9 @@ import { getFollowedReporterIds, getReporterFollowState, toggleReporterFollow } 
 
 // ─── Constants ─────────────────────────────────────────────────────────────────
 
-const CHIP_H       = 44;
-const TWO_MIN_MS   = 2 * 60 * 1000;
+const HEADER_H    = 48;
+const CHIP_H      = 44;
+const TWO_MIN_MS  = 2 * 60 * 1000;
 
 const CATEGORIES = [...NEWS_CATEGORIES];
 const SORT_OPTIONS = ["Latest", "Trending", "Most liked"] as const;
@@ -216,7 +218,7 @@ const CategoryBar = memo(function CategoryBar({
   );
 });
 
-// ─── Sort Dropdown ─────────────────────────────────────────────────────────────
+// ─── Sort Sheet (bottom sheet modal) ──────────────────────────────────────────
 
 const SortBtn = memo(function SortBtn({
   sortOption,
@@ -227,34 +229,49 @@ const SortBtn = memo(function SortBtn({
 }) {
   const [open, setOpen] = useState(false);
   return (
-    <View>
+    <>
       <TouchableOpacity
-        onPress={() => setOpen((v) => !v)}
+        onPress={() => setOpen(true)}
         activeOpacity={0.75}
-        style={styles.sortBtn}
+        style={styles.sortIconBtn}
+        accessibilityRole="button"
+        accessibilityLabel={`Sort: ${sortOption}`}
+        hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
       >
-        <Feather name="sliders" size={12} color="rgba(255,255,255,0.55)" />
-        <Text style={styles.sortBtnText}>{sortOption}</Text>
-        <Feather name={open ? "chevron-up" : "chevron-down"} size={11} color="rgba(255,255,255,0.35)" />
+        <Feather name="sliders" size={16} color="rgba(255,255,255,0.78)" />
       </TouchableOpacity>
-      {open && (
-        <View style={styles.sortSheet}>
-          {SORT_OPTIONS.map((opt) => (
-            <TouchableOpacity
-              key={opt}
-              onPress={() => { onSort(opt); setOpen(false); }}
-              activeOpacity={0.75}
-              style={styles.sortOption}
-            >
-              <Text style={[styles.sortOptionText, opt === sortOption && styles.sortOptionActive]}>
-                {opt}
-              </Text>
-              {opt === sortOption && <Feather name="check" size={13} color="#0a9b9a" />}
-            </TouchableOpacity>
-          ))}
-        </View>
-      )}
-    </View>
+
+      <Modal
+        visible={open}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setOpen(false)}
+      >
+        <TouchableOpacity
+          style={styles.sortScrim}
+          activeOpacity={1}
+          onPress={() => setOpen(false)}
+        >
+          <View style={styles.sortSheetModal} onStartShouldSetResponder={() => true}>
+            <View style={styles.sortHandle} />
+            <Text style={styles.sortSheetTitle}>Sort by</Text>
+            {SORT_OPTIONS.map((opt) => (
+              <TouchableOpacity
+                key={opt}
+                onPress={() => { onSort(opt); setOpen(false); }}
+                activeOpacity={0.75}
+                style={styles.sortOption}
+              >
+                <Text style={[styles.sortOptionText, opt === sortOption && styles.sortOptionActive]}>
+                  {opt}
+                </Text>
+                {opt === sortOption && <Feather name="check" size={16} color="#0a9b9a" />}
+              </TouchableOpacity>
+            ))}
+          </View>
+        </TouchableOpacity>
+      </Modal>
+    </>
   );
 });
 
@@ -301,7 +318,9 @@ export default function NewsScreen() {
   }, []);
 
   const topPad     = Platform.OS === "web" ? 67 : insets.top;
-  const feedTop    = topPad + CHIP_H;
+  const headerTop  = topPad;
+  const chipBarTop = topPad + HEADER_H;
+  const feedTop    = chipBarTop + CHIP_H;
   const bottomPad  = insets.bottom + (Platform.OS === "web" ? 84 : 100);
 
   const { data: freshData, isLoading, isError, refetch } = useQuery({
@@ -418,24 +437,40 @@ export default function NewsScreen() {
     })
   );
 
-  const debugLabel = showSpinner
-    ? "NewsScreen · loading"
-    : showError
-    ? "NewsScreen · error"
-    : displayData.length === 0
-    ? "NewsScreen · empty"
-    : `NewsScreen · NewspaperFeed (${displayData.length})`;
 
   return (
     <View style={styles.container}>
-      {/* TEMP DEBUG LABEL — remove when done */}
-      <View pointerEvents="none" style={debugStyles.wrap}>
-        <Text style={debugStyles.text}>{debugLabel}</Text>
+      {/* ══════════════════ TOP HEADER ════════════════════════════════════════ */}
+      <View style={[styles.appHeader, { paddingTop: topPad, height: topPad + HEADER_H }]}>
+        <View style={styles.appHeaderInner}>
+          <View style={styles.brandRow}>
+            <View style={styles.brandDot} />
+            <Text style={styles.brandText}>Insta<Text style={styles.brandTextAccent}>News</Text></Text>
+          </View>
+          <View style={styles.headerActions}>
+            <TouchableOpacity
+              style={styles.headerIconBtn}
+              activeOpacity={0.7}
+              onPress={() => router.push("/search" as never)}
+              accessibilityRole="button"
+              accessibilityLabel="Search"
+            >
+              <Feather name="search" size={18} color="rgba(255,255,255,0.85)" />
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.headerIconBtn}
+              activeOpacity={0.7}
+              accessibilityRole="button"
+              accessibilityLabel="Notifications"
+            >
+              <Feather name="bell" size={18} color="rgba(255,255,255,0.85)" />
+            </TouchableOpacity>
+          </View>
+        </View>
       </View>
 
-
       {/* ══════════════════ CATEGORY CHIPS ════════════════════════════════════ */}
-      <View style={[styles.chipBar, { top: topPad }]}>
+      <View style={[styles.chipBar, { top: chipBarTop }]}>
         <View style={{ flex: 1 }}>
           <CategoryBar
             selected={category}
@@ -471,11 +506,10 @@ export default function NewsScreen() {
         onLayout={(e) => setFeedHeight(e.nativeEvent.layout.height)}
       >
         {showSpinner ? (
-          <View style={styles.center}>
-            <View style={styles.statusIconWrap}>
-              <Feather name="loader" size={24} color="#0a9b9a" />
-            </View>
-            <Text style={styles.statusText}>Loading news…</Text>
+          <View style={{ paddingTop: 8 }}>
+            {[0, 1, 2].map((i) => (
+              <NewsCardSkeleton key={i} height={Math.max(360, (feedHeight - feedTop) || 420)} />
+            ))}
           </View>
         ) : showError ? (
           <View style={styles.center}>
@@ -567,47 +601,88 @@ const styles = StyleSheet.create({
   chipInactive: { backgroundColor: "rgba(18,20,24,0.78)", borderColor: "rgba(255,255,255,0.16)" },
   chipText:     { fontSize: 11, fontWeight: "800", letterSpacing: 0.2 },
 
-  // Sort
-  sortBtn: {
+  // Top header
+  appHeader: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    zIndex: 11,
+    backgroundColor: "#0d1320",
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: "rgba(255,255,255,0.06)",
+    justifyContent: "flex-end",
+  },
+  appHeaderInner: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 4,
-    height: 28,
-    paddingHorizontal: 10,
-    borderRadius: 18,
-    borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.16)",
-    backgroundColor: "rgba(18,20,24,0.78)",
-    marginRight: 4,
+    justifyContent: "space-between",
+    paddingHorizontal: 16,
+    paddingBottom: 10,
   },
-  sortBtnText: { color: "rgba(255,255,255,0.80)", fontSize: 11, fontWeight: "700" },
-  sortSheet: {
-    position: "absolute",
-    top: 34,
-    right: 4,
-    zIndex: 50,
-    backgroundColor: "#111820",
+  brandRow: { flexDirection: "row", alignItems: "center", gap: 8, minWidth: 0 },
+  brandDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: "#0a9b9a" },
+  brandText: { color: "#fff", fontSize: 17, fontWeight: "900", letterSpacing: 0.2 },
+  brandTextAccent: { color: "#0a9b9a" },
+  headerActions: { flexDirection: "row", alignItems: "center", gap: 4 },
+  headerIconBtn: {
+    width: 36,
+    height: 36,
     borderRadius: 10,
-    borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.10)",
-    minWidth: 152,
-    overflow: "hidden",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.25,
-    shadowRadius: 10,
-    elevation: 6,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "rgba(255,255,255,0.06)",
+  },
+
+  // Sort
+  sortIconBtn: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "rgba(255,255,255,0.06)",
+    marginRight: 6,
+  },
+  sortScrim: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.55)",
+    justifyContent: "flex-end",
+  },
+  sortSheetModal: {
+    backgroundColor: "#111820",
+    borderTopLeftRadius: 18,
+    borderTopRightRadius: 18,
+    paddingTop: 10,
+    paddingBottom: 28,
+    paddingHorizontal: 4,
+    borderTopWidth: 2,
+    borderTopColor: "#0a9b9a",
+  },
+  sortHandle: {
+    width: 36,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: "rgba(255,255,255,0.20)",
+    alignSelf: "center",
+    marginBottom: 10,
+  },
+  sortSheetTitle: {
+    color: "rgba(255,255,255,0.55)",
+    fontSize: 11,
+    fontWeight: "800",
+    letterSpacing: 1.5,
+    paddingHorizontal: 18,
+    paddingBottom: 6,
   },
   sortOption: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    paddingHorizontal: 14,
-    minHeight: 44,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: "rgba(255,255,255,0.08)",
+    paddingHorizontal: 18,
+    minHeight: 52,
   },
-  sortOptionText:   { color: "#ffffff", fontSize: 13, fontWeight: "600" },
+  sortOptionText:   { color: "rgba(255,255,255,0.85)", fontSize: 15, fontWeight: "600" },
   sortOptionActive: { color: "#0a9b9a", fontWeight: "800" },
 
   // Action bar (inside each card, passed via renderActions)
@@ -703,25 +778,4 @@ const styles = StyleSheet.create({
   },
   offlineBannerText: { flex: 1, color: "#0a9b9a", fontSize: 12, fontWeight: "600" },
   offlineRetry:      { color: "#ffffff", fontSize: 12, fontWeight: "800" },
-});
-
-const debugStyles = StyleSheet.create({
-  wrap: {
-    position: "absolute",
-    top: 2,
-    left: 0,
-    right: 0,
-    zIndex: 9999,
-    alignItems: "center",
-  },
-  text: {
-    backgroundColor: "rgba(10,155,154,0.95)",
-    color: "#fff",
-    fontSize: 10,
-    fontWeight: "800",
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 4,
-    letterSpacing: 0.3,
-  },
 });
