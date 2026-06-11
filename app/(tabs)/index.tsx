@@ -437,13 +437,6 @@ export default function NewsScreen() {
     })
   );
 
-  const debugLabel = showSpinner
-    ? "NewsScreen · loading"
-    : showError
-    ? "NewsScreen · error"
-    : displayData.length === 0
-    ? "NewsScreen · empty"
-    : `NewsScreen · NewspaperFeed (${displayData.length})`;
 
   return (
     <View style={styles.container}>
@@ -785,25 +778,4 @@ const styles = StyleSheet.create({
   },
   offlineBannerText: { flex: 1, color: "#0a9b9a", fontSize: 12, fontWeight: "600" },
   offlineRetry:      { color: "#ffffff", fontSize: 12, fontWeight: "800" },
-});
-
-const debugStyles = StyleSheet.create({
-  wrap: {
-    position: "absolute",
-    top: 2,
-    left: 0,
-    right: 0,
-    zIndex: 9999,
-    alignItems: "center",
-  },
-  text: {
-    backgroundColor: "rgba(10,155,154,0.95)",
-    color: "#fff",
-    fontSize: 10,
-    fontWeight: "800",
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 4,
-    letterSpacing: 0.3,
-  },
 });
