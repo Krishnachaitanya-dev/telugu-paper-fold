@@ -4,16 +4,16 @@
     "strict": true,
     "paths": {
       "@/core/*": [
-        "src/core/*"
+        "./src/core/*"
       ],
       "@/features/*": [
-        "src/features/*"
+        "./src/features/*"
       ],
       "@/design/*": [
-        "src/design/*"
+        "./src/design/*"
       ],
       "@/shared/*": [
-        "src/shared/*"
+        "./src/shared/*"
       ],
       "@/*": [
         "./*"
