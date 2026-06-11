@@ -558,10 +558,20 @@ export default function NewsScreen() {
             emptyComponent={
               <View style={[styles.center, { marginTop: 60 }]}>
                 <View style={styles.statusIconWrap}>
-                  <Feather name="inbox" size={22} color="rgba(255,255,255,0.30)" />
+                  <Feather name="inbox" size={24} color="#0a9b9a" />
                 </View>
-                <Text style={styles.emptyTitle}>No articles here yet</Text>
-                <Text style={styles.emptySub}>Try a different category</Text>
+                <Text style={styles.emptyTitle}>No stories to show</Text>
+                <Text style={styles.emptySub}>
+                  Pull down to refresh or pick another{"\n"}category — we'll bring the latest in.
+                </Text>
+                <TouchableOpacity
+                  style={styles.retryBtn}
+                  onPress={() => { console.log("[News] empty Retry tapped"); refetch(); }}
+                  activeOpacity={0.8}
+                  accessibilityRole="button"
+                >
+                  <Text style={styles.retryBtnText}>Retry</Text>
+                </TouchableOpacity>
               </View>
             }
           />
