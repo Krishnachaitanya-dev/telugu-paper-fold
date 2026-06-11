@@ -686,12 +686,10 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    paddingHorizontal: 14,
-    minHeight: 44,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: "rgba(255,255,255,0.08)",
+    paddingHorizontal: 18,
+    minHeight: 52,
   },
-  sortOptionText:   { color: "#ffffff", fontSize: 13, fontWeight: "600" },
+  sortOptionText:   { color: "rgba(255,255,255,0.85)", fontSize: 15, fontWeight: "600" },
   sortOptionActive: { color: "#0a9b9a", fontWeight: "800" },
 
   // Action bar (inside each card, passed via renderActions)
