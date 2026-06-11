@@ -415,6 +415,7 @@ const ChannelPicker = memo(function ChannelPicker({
 export default function ReelsScreen() {
   const insets = useSafeAreaInsets();
   const { width, height } = useWindowDimensions();
+  const [containerHeight, setContainerHeight] = useState(0);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [feedFilter, setFeedFilter] = useState<(typeof REEL_FILTERS)[number]>("All");
   const [contentFilter, setContentFilter] = useState<ContentFilter>("Latest");
@@ -433,7 +434,10 @@ export default function ReelsScreen() {
   const CONTENT_BAR_H = 40;
   const channelBarTop = topPad + HEADER_H;
   const contentBarTop = channelBarTop + CHIP_BAR_H;
-  const cardHeight = height;
+  // Use the actual visible area (tab navigator already excludes the tab bar).
+  // Fallback to window height minus a conservative tab-bar estimate while measuring.
+  const tabBarEstimate = Platform.OS === "web" ? 84 : 58 + insets.bottom;
+  const cardHeight = containerHeight > 0 ? containerHeight : height - tabBarEstimate;
 
   useEffect(() => {
     let mounted = true;
