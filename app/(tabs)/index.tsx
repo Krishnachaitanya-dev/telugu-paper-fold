@@ -323,14 +323,20 @@ export default function NewsScreen() {
   const feedTop    = chipBarTop + CHIP_H;
   const bottomPad  = insets.bottom + (Platform.OS === "web" ? 84 : 100);
 
-  const { data: freshData, isLoading, isError, refetch } = useQuery({
+  useEffect(() => { console.log("[News] screen mounted"); }, []);
+
+  const { data: freshData, isLoading, isError, error, refetch } = useQuery({
     queryKey: ["news", category, followedReporterIds.join(",")],
     queryFn: async () => {
+      console.log("[News] queryFn start", { category, followedCount: followedReporterIds.length });
+      const t0 = Date.now();
       const articles = await db.fetchNews(category, followedReporterIds);
+      console.log(`[News] fetched ${articles.length} articles in ${Date.now() - t0}ms`);
       if (articles.length > 0) {
         const merged = Array.from(
           new Map([...articles, ...cache.articles].map((x) => [x.id, x])).values()
         );
+        console.log(`[News] merging + caching ${merged.length} (cache had ${cache.articles.length})`);
         cacheNews(merged).then(() => setCache({ articles: merged, cachedAt: new Date() }));
       }
       return articles;
@@ -342,6 +348,10 @@ export default function NewsScreen() {
     refetchOnReconnect: true,
     retry: 1,
   });
+
+  useEffect(() => {
+    if (isError) console.warn("[News] query error:", error);
+  }, [isError, error]);
 
   const { data: liveChannels } = useQuery({
     queryKey: ["live-channels"],
