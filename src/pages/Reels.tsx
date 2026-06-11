@@ -166,7 +166,7 @@ function ActionBtn({
   active,
   activeColor,
 }: {
-  icon: React.ComponentType<{ className?: string }>;
+  icon: React.ComponentType<{ className?: string; fill?: string; strokeWidth?: number }>;
   label: string;
   onClick?: () => void;
   active?: boolean;
@@ -175,7 +175,11 @@ function ActionBtn({
   return (
     <button onClick={onClick} className="flex flex-col items-center gap-1 group">
       <span className="h-12 w-12 rounded-full bg-white/15 backdrop-blur-md grid place-items-center group-hover:bg-white/25 transition">
-        <Icon className={cn("h-6 w-6 transition-colors", active ? activeColor : "text-white")} strokeWidth={active ? 0 : 2} fill={active ? "currentColor" : "none"} />
+        <Icon
+          className={cn("h-6 w-6 transition-colors", active ? activeColor : "text-white")}
+          fill={active ? "currentColor" : "none"}
+          strokeWidth={active ? 0 : 2}
+        />
       </span>
       <span className="text-[10px] font-bold opacity-90">{label}</span>
     </button>
