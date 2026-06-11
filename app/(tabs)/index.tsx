@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import * as Haptics from "expo-haptics";
 import { router, useFocusEffect } from "expo-router";
 import { Feather, MaterialCommunityIcons } from "@expo/vector-icons";
+import { SafeIcon } from "@/components/SafeIcon";
 import React, { memo, useCallback, useEffect, useMemo, useState } from "react";
 import {
   Alert,
