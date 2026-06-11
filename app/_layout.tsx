@@ -92,6 +92,36 @@ export default function RootLayout() {
     ...FontAwesome.font,
   });
   const [showSplash, setShowSplash] = useState(true);
+  const [showNavFallback, setShowNavFallback] = useState(false);
+
+  // ─── Lifecycle log: confirm RootLayout mounted ────────────────────────────
+  useEffect(() => {
+    console.log("[Lifecycle] RootLayout mounted");
+    return () => console.log("[Lifecycle] RootLayout unmounted");
+  }, []);
+
+  // ─── Nav watchdog: if splash dismissed but no tab screen mounted, show fallback
+  useEffect(() => {
+    if (showSplash) return;
+    console.log("[Lifecycle] splash dismissed, waiting for tab mount…");
+    if (getTabMountStatus() === "mounted") {
+      console.log("[Lifecycle] tabs already mounted");
+      return;
+    }
+    const unsub = subscribeTabMountStatus((s) => {
+      if (s === "mounted") setShowNavFallback(false);
+    });
+    const watchdog = setTimeout(() => {
+      if (getTabMountStatus() !== "mounted") {
+        console.warn("[Lifecycle] tab navigator never mounted after 4s — showing fallback");
+        setShowNavFallback(true);
+      }
+    }, 4000);
+    return () => {
+      unsub();
+      clearTimeout(watchdog);
+    };
+  }, [showSplash]);
 
   useEffect(() => {
     // Hard cap: never block the app on fonts for more than 5s.
