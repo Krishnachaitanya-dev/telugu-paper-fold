@@ -1,14 +1,23 @@
 {
   "extends": "expo/tsconfig.base",
   "compilerOptions": {
-    "baseUrl": ".",
     "strict": true,
     "paths": {
-      "@/core/*": ["src/core/*"],
-      "@/features/*": ["src/features/*"],
-      "@/design/*": ["src/design/*"],
-      "@/shared/*": ["src/shared/*"],
-      "@/*": ["./*"]
+      "@/core/*": [
+        "src/core/*"
+      ],
+      "@/features/*": [
+        "src/features/*"
+      ],
+      "@/design/*": [
+        "src/design/*"
+      ],
+      "@/shared/*": [
+        "src/shared/*"
+      ],
+      "@/*": [
+        "./*"
+      ]
     }
   },
   "include": [
