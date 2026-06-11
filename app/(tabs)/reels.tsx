@@ -239,7 +239,7 @@ const ReelCard = memo(function ReelCard({
   const [muted, setMuted] = useState(false);
   const toggleMute = useCallback(() => setMuted((v) => !v), []);
 
-  const navPad = insets.bottom + (Platform.OS === "web" ? 84 : 100);
+  const navPad = 24;
   const thumb = useMemo(() => getThumb(reel.video_id), [reel.video_id]);
   const title = isUsefulReelTitle(reel.title) ? reel.title : "";
 
