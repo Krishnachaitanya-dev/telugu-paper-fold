@@ -132,27 +132,27 @@ const ActionBar = memo(function ActionBar({ item }: { item: NewsUpdate }) {
     <View style={styles.actionBar}>
       <TouchableOpacity onPress={handleLike} style={styles.actionBtn} activeOpacity={0.7}
         accessibilityRole="button" accessibilityLabel="Like">
-        <Feather name="heart" size={18} color={liked ? "#0a9b9a" : iconColor} />
+        <SafeIcon name="heart" size={18} color={liked ? "#0a9b9a" : iconColor} />
       </TouchableOpacity>
 
       <TouchableOpacity onPress={handleBookmark} style={styles.actionBtn} activeOpacity={0.7}
         accessibilityRole="button" accessibilityLabel="Bookmark">
-        <Feather name="bookmark" size={18} color={bookmarked ? "#0a9b9a" : iconColor} />
+        <SafeIcon name="bookmark" size={18} color={bookmarked ? "#0a9b9a" : iconColor} />
       </TouchableOpacity>
 
       <TouchableOpacity onPress={handleWhatsApp} style={styles.actionBtn} activeOpacity={0.7}
         accessibilityRole="button" accessibilityLabel="Share to WhatsApp">
-        <MaterialCommunityIcons name="whatsapp" size={20} color="#25D366" />
+        <SafeIcon family="mci" name="whatsapp" size={20} color="#25D366" />
       </TouchableOpacity>
 
       <TouchableOpacity onPress={handleShare} style={styles.actionBtn} activeOpacity={0.7}
         accessibilityRole="button" accessibilityLabel="Share">
-        <Feather name="share-2" size={18} color={iconColor} />
+        <SafeIcon name="share-2" size={18} color={iconColor} />
       </TouchableOpacity>
 
       <TouchableOpacity onPress={handleChat} style={styles.actionBtn} activeOpacity={0.7}
         accessibilityRole="button" accessibilityLabel="Send to chat">
-        <Feather name="send" size={17} color={iconColor} />
+        <SafeIcon name="send" size={17} color={iconColor} />
       </TouchableOpacity>
 
       {item.reporter_id && !isSelf ? (
@@ -163,7 +163,7 @@ const ActionBar = memo(function ActionBar({ item }: { item: NewsUpdate }) {
           accessibilityRole="button"
           accessibilityLabel={following ? "Unfollow reporter" : "Follow reporter"}
         >
-          <Feather
+          <SafeIcon
             name={following ? "user-check" : "user-plus"}
             size={12}
             color={following ? "#0a9b9a" : "#fff"}
