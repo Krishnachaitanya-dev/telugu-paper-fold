@@ -2,6 +2,8 @@ import Constants from "expo-constants";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { router, Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
+import { useFonts } from "expo-font";
+import { Feather, MaterialCommunityIcons, Ionicons, MaterialIcons, FontAwesome } from "@expo/vector-icons";
 import * as Sentry from "@sentry/react-native";
 import React, { useEffect, useRef, useState } from "react";
 import { Animated, Easing, StyleSheet, Text, View } from "react-native";
