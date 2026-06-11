@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Heart, MessageCircle, Share2, Bookmark, Volume2, VolumeX, RefreshCw } from "lucide-react";
+import { Heart, MessageCircle, Share2, Bookmark, Volume2, VolumeX, RefreshCw, Play } from "lucide-react";
 import { fetchReels, type ReelItem } from "@/lib/queries";
-import { EmptyState } from "@/components/EmptyState";
+import { ErrorState, EmptyState, SkeletonReel } from "@/components/EmptyState";
 import { cn } from "@/lib/utils";
 
 export default function Reels() {
@@ -13,33 +13,51 @@ export default function Reels() {
   const [muted, setMuted] = useState(true);
   const [activeIdx, setActiveIdx] = useState(0);
   const containerRef = useRef<HTMLDivElement>(null);
+  const itemRefs = useRef<Map<number, HTMLElement>>(new Map());
 
+  // IntersectionObserver — accurate active detection at snap boundaries
   useEffect(() => {
-    const el = containerRef.current;
-    if (!el) return;
-    const onScroll = () => {
-      const idx = Math.round(el.scrollTop / el.clientHeight);
-      setActiveIdx(idx);
-    };
-    el.addEventListener("scroll", onScroll, { passive: true });
-    return () => el.removeEventListener("scroll", onScroll);
+    if (!data || data.length === 0) return;
+    const root = containerRef.current;
+    if (!root) return;
+    const io = new IntersectionObserver(
+      (entries) => {
+        let best: { idx: number; ratio: number } | null = null;
+        entries.forEach((e) => {
+          const idx = Number((e.target as HTMLElement).dataset.idx);
+          if (!isFinite(idx)) return;
+          if (e.isIntersecting && (!best || e.intersectionRatio > best.ratio)) {
+            best = { idx, ratio: e.intersectionRatio };
+          }
+        });
+        if (best) setActiveIdx(best.idx);
+      },
+      { root, threshold: [0.55, 0.75, 0.95] }
+    );
+    itemRefs.current.forEach((el) => io.observe(el));
+    return () => io.disconnect();
   }, [data]);
 
   if (isLoading) {
     return (
-      <div className="h-[100dvh] grid place-items-center bg-black text-white">
-        <div className="text-sm font-semibold opacity-70">Loading reels…</div>
+      <div className="snap-reels h-[100dvh] overflow-y-scroll no-scrollbar bg-black">
+        <SkeletonReel />
       </div>
     );
   }
-  if (isError || !data || data.length === 0) {
+
+  if (isError) {
     return (
-      <div className="h-[100dvh] grid place-items-center bg-black text-white">
-        <EmptyState
-          title="రీల్స్ లోడ్ కాలేదు"
-          hint="తాజా రీల్స్ కోసం మళ్లీ ప్రయత్నించండి."
-          onRetry={() => refetch()}
-        />
+      <div className="h-[100dvh] grid place-items-center bg-black">
+        <ErrorState title="రీల్స్ లోడ్ కాలేదు" hint="ఇంటర్నెట్ తనిఖీ చేసి మళ్లీ ప్రయత్నించండి." tone="dark" onRetry={() => refetch()} />
+      </div>
+    );
+  }
+
+  if (!data || data.length === 0) {
+    return (
+      <div className="h-[100dvh] grid place-items-center bg-black">
+        <EmptyState title="రీల్స్ లేవు" hint="త్వరలో మరిన్ని రీల్స్ జోడించబడతాయి." tone="dark" onRetry={() => refetch()} />
       </div>
     );
   }
@@ -53,9 +71,16 @@ export default function Reels() {
         <ReelItemView
           key={r.id}
           item={r}
+          index={i}
           active={i === activeIdx}
+          // preload neighbors (current ± 1) to keep transitions smooth
+          preload={Math.abs(i - activeIdx) <= 1}
           muted={muted}
           onToggleMute={() => setMuted((m) => !m)}
+          registerRef={(el) => {
+            if (el) itemRefs.current.set(i, el);
+            else itemRefs.current.delete(i);
+          }}
         />
       ))}
     </div>
@@ -64,37 +89,85 @@ export default function Reels() {
 
 function ReelItemView({
   item,
+  index,
   active,
+  preload,
   muted,
   onToggleMute,
+  registerRef,
 }: {
   item: ReelItem;
+  index: number;
   active: boolean;
+  preload: boolean;
   muted: boolean;
   onToggleMute: () => void;
+  registerRef: (el: HTMLElement | null) => void;
 }) {
   const [liked, setLiked] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [iframeReady, setIframeReady] = useState(false);
 
-  const src = `https://www.youtube.com/embed/${item.youtube_id}?autoplay=${active ? 1 : 0}&mute=${muted ? 1 : 0}&controls=0&modestbranding=1&playsinline=1&loop=1&playlist=${item.youtube_id}&rel=0`;
+  // Reset buffering state whenever we leave & re-enter
+  useEffect(() => {
+    if (!preload) setIframeReady(false);
+  }, [preload]);
+
+  const src = preload
+    ? `https://www.youtube.com/embed/${item.youtube_id}?autoplay=${active ? 1 : 0}&mute=${muted ? 1 : 0}&controls=0&modestbranding=1&playsinline=1&loop=1&playlist=${item.youtube_id}&rel=0&iv_load_policy=3`
+    : "";
 
   return (
-    <section className="relative h-[100dvh] w-full overflow-hidden bg-black">
+    <section
+      ref={registerRef}
+      data-idx={index}
+      className="relative h-[100dvh] w-full overflow-hidden bg-black"
+    >
       <div className="absolute inset-0 grid place-items-center">
-        <div className="relative h-full w-full max-w-[480px] mx-auto aspect-[9/16] bg-black">
-          {active ? (
+        <div className="relative h-full w-full max-w-[480px] mx-auto bg-black">
+          {/* Thumbnail layer — always rendered, fades out when iframe is ready & active */}
+          {item.thumbnail_url && (
+            <img
+              src={item.thumbnail_url}
+              alt=""
+              loading={preload ? "eager" : "lazy"}
+              className={cn(
+                "absolute inset-0 h-full w-full object-cover reel-fade",
+                active && iframeReady ? "opacity-0" : "opacity-100"
+              )}
+            />
+          )}
+
+          {/* Iframe — mounted for current ± 1 for smooth transitions */}
+          {preload && (
             <iframe
-              key={item.id}
               src={src}
               title={item.title}
               allow="autoplay; encrypted-media; picture-in-picture"
               allowFullScreen
-              className="absolute inset-0 h-full w-full"
+              onLoad={() => setIframeReady(true)}
+              className={cn(
+                "absolute inset-0 h-full w-full reel-fade",
+                active && iframeReady ? "opacity-100" : "opacity-0 pointer-events-none"
+              )}
               style={{ border: 0 }}
             />
-          ) : item.thumbnail_url ? (
-            <img src={item.thumbnail_url} alt="" className="absolute inset-0 h-full w-full object-cover opacity-70" />
-          ) : null}
+          )}
+
+          {/* Buffering spinner while active iframe is loading */}
+          {active && !iframeReady && (
+            <div className="absolute inset-0 grid place-items-center pointer-events-none">
+              <div className="h-12 w-12 rounded-full border-2 border-white/25 border-t-white animate-spin" />
+            </div>
+          )}
+
+          {/* Play affordance hint (shown briefly when iframe not yet ready and no thumbnail) */}
+          {active && !iframeReady && !item.thumbnail_url && (
+            <div className="absolute inset-0 grid place-items-center pointer-events-none">
+              <Play className="h-14 w-14 text-white/60" />
+            </div>
+          )}
+
           <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-transparent to-black/40 pointer-events-none" />
         </div>
       </div>
@@ -109,7 +182,13 @@ function ReelItemView({
           onClick={() => setLiked((v) => !v)}
         />
         <ActionBtn icon={MessageCircle} label="కామెంట్" />
-        <ActionBtn icon={Share2} label="షేర్" onClick={() => navigator.share?.({ title: item.title, url: `https://youtu.be/${item.youtube_id}` })} />
+        <ActionBtn
+          icon={Share2}
+          label="షేర్"
+          onClick={() =>
+            navigator.share?.({ title: item.title, url: `https://youtu.be/${item.youtube_id}` }).catch(() => {})
+          }
+        />
         <ActionBtn
           icon={Bookmark}
           active={saved}
@@ -145,7 +224,7 @@ function ReelItemView({
         <div className="mt-2 text-[11px] text-white/70 font-semibold">#{item.category}</div>
       </div>
 
-      {/* Refresh on first reel */}
+      {/* Refresh on active reel */}
       {active && (
         <button
           onClick={() => location.reload()}
@@ -174,7 +253,7 @@ function ActionBtn({
 }) {
   return (
     <button onClick={onClick} className="flex flex-col items-center gap-1 group">
-      <span className="h-12 w-12 rounded-full bg-white/15 backdrop-blur-md grid place-items-center group-hover:bg-white/25 transition">
+      <span className="h-12 w-12 rounded-full bg-white/15 backdrop-blur-md grid place-items-center group-hover:bg-white/25 transition active:scale-90">
         <Icon
           className={cn("h-6 w-6 transition-colors", active ? activeColor : "text-white")}
           fill={active ? "currentColor" : "none"}

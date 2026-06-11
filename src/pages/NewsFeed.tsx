@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { ShieldCheck, Clock, ExternalLink, Share2, ChevronUp, RefreshCw } from "lucide-react";
 import { fetchNews, type NewsItem } from "@/lib/queries";
-import { EmptyState } from "@/components/EmptyState";
+import { EmptyState, ErrorState, SkeletonNewsFull } from "@/components/EmptyState";
 import { cn, timeAgo } from "@/lib/utils";
 
 const FALLBACK_CATS = ["అన్నీ"];
@@ -48,17 +48,34 @@ export default function NewsFeed() {
 
   if (isLoading) {
     return (
-      <div className="h-[calc(100dvh-9.5rem)] grid place-items-center">
-        <div className="text-sm font-semibold text-muted-foreground">వార్తలు లోడ్ అవుతున్నాయి…</div>
+      <div>
+        <div className="sticky top-14 z-30 bg-background/90 backdrop-blur-md px-4 py-2 border-b border-border flex gap-2 overflow-x-auto no-scrollbar">
+          {[0,1,2,3,4].map(i => (
+            <div key={i} className="shrink-0 h-8 w-20 rounded-full bg-card animate-pulse" />
+          ))}
+        </div>
+        <SkeletonNewsFull />
       </div>
     );
   }
 
-  if (isError || items.length === 0) {
+  if (isError) {
+    return (
+      <div className="px-4 pt-6">
+        <ErrorState
+          title="వార్తలు లోడ్ కాలేదు"
+          hint="ఇంటర్నెట్ కనెక్షన్ తనిఖీ చేసి మళ్లీ ప్రయత్నించండి."
+          onRetry={() => refetch()}
+        />
+      </div>
+    );
+  }
+
+  if (items.length === 0) {
     return (
       <div className="px-4 pt-6">
         <EmptyState
-          title={isError ? "వార్తలు లోడ్ కాలేదు" : "వార్తలు అందుబాటులో లేవు"}
+          title="వార్తలు అందుబాటులో లేవు"
           hint="తాజా అప్‌డేట్‌ల కోసం రిఫ్రెష్ చేయండి."
           onRetry={() => refetch()}
         />
