@@ -239,7 +239,7 @@ const ReelCard = memo(function ReelCard({
   const [muted, setMuted] = useState(false);
   const toggleMute = useCallback(() => setMuted((v) => !v), []);
 
-  const navPad = insets.bottom + (Platform.OS === "web" ? 84 : 100);
+  const navPad = 24;
   const thumb = useMemo(() => getThumb(reel.video_id), [reel.video_id]);
   const title = isUsefulReelTitle(reel.title) ? reel.title : "";
 
@@ -415,6 +415,7 @@ const ChannelPicker = memo(function ChannelPicker({
 export default function ReelsScreen() {
   const insets = useSafeAreaInsets();
   const { width, height } = useWindowDimensions();
+  const [containerHeight, setContainerHeight] = useState(0);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [feedFilter, setFeedFilter] = useState<(typeof REEL_FILTERS)[number]>("All");
   const [contentFilter, setContentFilter] = useState<ContentFilter>("Latest");
@@ -433,7 +434,10 @@ export default function ReelsScreen() {
   const CONTENT_BAR_H = 40;
   const channelBarTop = topPad + HEADER_H;
   const contentBarTop = channelBarTop + CHIP_BAR_H;
-  const cardHeight = height;
+  // Use the actual visible area (tab navigator already excludes the tab bar).
+  // Fallback to window height minus a conservative tab-bar estimate while measuring.
+  const tabBarEstimate = Platform.OS === "web" ? 84 : 58 + insets.bottom;
+  const cardHeight = containerHeight > 0 ? containerHeight : height - tabBarEstimate;
 
   useEffect(() => {
     let mounted = true;
@@ -601,7 +605,13 @@ export default function ReelsScreen() {
   }
 
   return (
-    <View style={styles.container}>
+    <View
+      style={styles.container}
+      onLayout={(e) => {
+        const h = e.nativeEvent.layout.height;
+        if (h > 0 && Math.abs(h - containerHeight) > 1) setContainerHeight(h);
+      }}
+    >
       {/* Header */}
       <View style={[styles.reelsHeader, { paddingTop: topPad, height: topPad + HEADER_H }]}>
         <View style={styles.reelsHeaderInner}>

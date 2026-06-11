@@ -22,6 +22,10 @@ import { backoffWithJitter } from "@/core/resilience/backoff";
 import { ToastProvider } from "@/shared/feedback/ToastProvider";
 import { setIconFontStatus } from "@/lib/iconFontStatus";
 import { getTabMountStatus, subscribeTabMountStatus } from "@/lib/tabMountStatus";
+import { loadIconFontsWeb } from "@/lib/loadIconFontsWeb";
+
+// Web-only: register @font-face for vector icons so they don't render as boxes
+loadIconFontsWeb();
 
 // Initialize Sentry before any rendering
 if (env.sentryDsn && !__DEV__) {
