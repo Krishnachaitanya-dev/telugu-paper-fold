@@ -139,15 +139,6 @@ function AnimatedNewsCardBase({ item, shouldLoadImage, height, renderActions }: 
       <View style={[styles.content, height ? styles.contentFlex : undefined]}>
         {/* Upper content — flex:1 pins actions to bottom */}
         <View style={{ flex: 1 }}>
-          {/* Metadata line */}
-          <View style={styles.metaRow}>
-            <View style={[styles.metaDot, { backgroundColor: accent }]} />
-            <Text style={[styles.metaCategory, { color: accent }]}>
-              {category.toUpperCase()}
-            </Text>
-            {time ? <Text style={styles.metaTime}> · {time}</Text> : null}
-          </View>
-
           {/* Headline */}
           <Text style={styles.headline} numberOfLines={3}>
             {item.title}
@@ -199,7 +190,6 @@ function AnimatedNewsCardBase({ item, shouldLoadImage, height, renderActions }: 
                 <Feather name="globe" size={12} color="rgba(255,255,255,0.40)" />
               </View>
             )}
-            <View style={styles.sourceSpacer} />
             {time ? (
               <Text style={styles.sourceTime}>{time}</Text>
             ) : null}
@@ -333,10 +323,10 @@ const styles = StyleSheet.create({
     lineHeight: 20,
     color: "rgba(255,255,255,0.70)",
     fontWeight: "400",
-    marginBottom: 14,
+    marginBottom: 10,
   },
 
-  factWrap: { marginBottom: 12 },
+  factWrap: { marginBottom: 10 },
 
   // Source row
   sourceRow: {
@@ -344,13 +334,12 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 8,
     marginTop: 4,
-    marginBottom: 14,
+    marginBottom: 10,
   },
   sourceAvatarWrap: {
     position: "relative",
     width: 28,
     height: 28,
-    marginRight: 0,
   },
   sourceAvatar: {
     width: 28,
@@ -383,7 +372,6 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     color: "rgba(255,255,255,0.65)",
   },
-  sourceSpacer: { flex: 1 },
   sourceTime: {
     fontSize: 12,
     fontWeight: "600",
