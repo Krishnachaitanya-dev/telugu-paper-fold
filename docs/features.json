@@ -1,0 +1,872 @@
+{
+  "app": {
+    "name": "Telugu E-Newspaper",
+    "tagline": "Breaking Telugu News, Reels & Live TV — One App",
+    "platform": ["android", "ios", "web"],
+    "framework": "Expo SDK 54 / React Native 0.81",
+    "language": "Telugu (primary), English, Hindi, Tamil, Kannada",
+    "supabase_project": "gahfunvvsrrnfuiwwplx.supabase.co",
+    "version": "1.0.0",
+    "target_users": 100000
+  },
+
+  "features": [
+    {
+      "id": "news_feed",
+      "name": "News Feed",
+      "category": "core",
+      "status": "live",
+      "description": "Primary home feed showing categorized Telugu news articles fetched from Supabase in real time. Cards include headline, image, source avatar (channel logo), category badge, timestamp, fact-check badge, and a pinned action bar. Supports offline fallback from local cache with age banner.",
+      "screens": ["/(tabs)/index"],
+      "data_sources": {
+        "tables": ["news_updates"],
+        "query_constraints": {
+          "max_articles": 150,
+          "time_window_hours": 24,
+          "order": "created_at DESC"
+        },
+        "edge_functions": [],
+        "storage_buckets": [],
+        "async_storage_keys": ["offline_news_v2", "offline_news_ts_v2"]
+      },
+      "interactions": [
+        "Tap card → open source URL in in-app browser with haptic feedback",
+        "Pull-to-refresh → refetch latest articles",
+        "Like button → local toggle with haptic",
+        "Bookmark button → local toggle (persisted to saved list)",
+        "WhatsApp share → open WhatsApp with title + URL",
+        "Native share → system share sheet",
+        "Send to Chat → save draft to AsyncStorage, open chat tab",
+        "Follow Reporter → toggle follow state, update reporter_follows table",
+        "Sort dropdown → switch between Latest / Trending / Most Liked"
+      ],
+      "card_fields": [
+        "title",
+        "description (80-word Gemini summary from ingest pipeline)",
+        "image_url",
+        "category",
+        "source_name",
+        "source_url",
+        "reporter_name",
+        "reporter_avatar_url (falls back to live_channels.logo_url by source_name match)",
+        "fact_check_status (verified | developing | unverified | factcheck)",
+        "created_at"
+      ],
+      "fact_check_badge_states": ["verified", "developing", "unverified", "factcheck"],
+      "verified_badge": {
+        "trigger": "fact_check_status === 'verified'",
+        "style": "blue circle #1d9bf0 with checkmark, overlapping source avatar corner"
+      },
+      "offline_behavior": "Show cached articles (max 200, max age 24h) with offline banner showing cache age",
+      "analytics_events": [
+        "news_opened(id, category, source)",
+        "news_shared(id, channel: 'whatsapp' | 'native' | 'chat')",
+        "news_bookmarked(id)"
+      ],
+      "dependencies": ["news_categories", "offline_cache", "reporter_follow", "auth"],
+      "sub_features": []
+    },
+
+    {
+      "id": "speed_news",
+      "name": "Speed News (Stories Mode)",
+      "category": "core",
+      "status": "live",
+      "description": "Instagram Stories–style full-screen card carousel showing the top 10 most recent news items. Each card has a gradient background (category-coloured), headline, brief summary, source, and progress bars per item. Opens as a bottom sheet modal from the 'Speed' category chip.",
+      "screens": ["/(tabs)/index → Speed modal"],
+      "data_sources": {
+        "tables": ["news_updates"],
+        "query_constraints": {
+          "max_items": 10,
+          "source": "top of current news_feed data"
+        },
+        "edge_functions": [],
+        "storage_buckets": [],
+        "async_storage_keys": []
+      },
+      "interactions": [
+        "Tap left third → go to previous card",
+        "Tap right third → go to next card",
+        "Swipe left/right → navigate cards (28% screen width threshold)",
+        "Auto-advance every 8 seconds with animated progress bars",
+        "Pause on swipe gesture start",
+        "Read full article button → open source URL",
+        "Share button → native share sheet",
+        "Close button → dismiss modal",
+        "Final card shows 'All caught up!' completion screen"
+      ],
+      "card_gradients": {
+        "Politics": ["#1E3A5F", "#2D6A4F"],
+        "Movies": ["#4A0E4E", "#1A0533"],
+        "Sports": ["#0A3D0A", "#1A4D1A"],
+        "Jobs": ["#3D2000", "#6B3A00"],
+        "Districts": ["#0D1B2A", "#1B2A4A"],
+        "default": ["#111820", "#1A2A3A"]
+      },
+      "analytics_events": [],
+      "dependencies": ["news_feed"],
+      "sub_features": []
+    },
+
+    {
+      "id": "news_categories",
+      "name": "Category Filtering",
+      "category": "core",
+      "status": "live",
+      "description": "Horizontal scrollable pill-shaped chip bar at the top of the news feed and reels screen. Each chip filters the feed to a category. Tapping 'Speed' opens Speed News modal instead of filtering. Tapping 'Following' requires auth and loads reporter subscriptions.",
+      "screens": ["/(tabs)/index", "/(tabs)/reels"],
+      "categories": [
+        { "id": "All", "label": "All", "behavior": "show all articles" },
+        { "id": "Speed", "label": "⚡ Speed", "behavior": "open Speed News modal" },
+        { "id": "Top", "label": "Top", "behavior": "first 40 articles" },
+        { "id": "Reporters", "label": "Reporters", "behavior": "articles with reporter_id set" },
+        { "id": "Following", "label": "Following", "behavior": "articles from followed reporters (requires auth)" },
+        { "id": "Jobs", "label": "Jobs", "behavior": "category=jobs articles" },
+        { "id": "Districts", "label": "Districts", "behavior": "category=districts articles" },
+        { "id": "Movies", "label": "Movies", "behavior": "category=movies articles" },
+        { "id": "TTD", "label": "TTD", "behavior": "category=ttd articles" },
+        { "id": "Exams", "label": "Exams", "behavior": "category=exams articles" },
+        { "id": "Sports", "label": "Sports", "behavior": "category=sports articles" },
+        { "id": "Politics", "label": "Politics", "behavior": "category=politics articles" }
+      ],
+      "chip_style": {
+        "shape": "pill (borderRadius 18)",
+        "idle": { "background": "rgba(18,20,24,0.78)", "border": "rgba(255,255,255,0.16)", "borderWidth": 1 },
+        "active": { "background": "#0a9b9a", "border": "#0a9b9a" }
+      },
+      "data_sources": { "tables": [], "edge_functions": [], "storage_buckets": [], "async_storage_keys": [] },
+      "interactions": [
+        "Tap chip → filter feed to that category",
+        "Tap Speed → open Speed News modal",
+        "Tap Following → load followed reporter IDs then filter"
+      ],
+      "analytics_events": [],
+      "dependencies": ["news_feed", "reporter_follow"],
+      "sub_features": []
+    },
+
+    {
+      "id": "news_search",
+      "name": "Full-Text Search",
+      "category": "core",
+      "status": "live",
+      "description": "Global news search modal accessible from the header. Uses Supabase PostgreSQL full-text search (WFTS via search_vector tsvector column with GIN index) for fast, accurate results. Shows title, category badge, and source per result.",
+      "screens": ["/search (modal)"],
+      "data_sources": {
+        "tables": ["news_updates"],
+        "query_type": "search_vector=wfts.<query>",
+        "max_results": 30,
+        "order": "created_at DESC",
+        "edge_functions": [],
+        "storage_buckets": [],
+        "async_storage_keys": []
+      },
+      "interactions": [
+        "Autofocus search input on modal open",
+        "Type query → results appear",
+        "Tap result → navigate to /news/[id]",
+        "Cancel button → dismiss modal",
+        "Keyboard dismiss on drag"
+      ],
+      "states": ["idle (empty)", "loading", "results list", "no results"],
+      "analytics_events": ["search_performed(query, resultCount)"],
+      "dependencies": [],
+      "sub_features": []
+    },
+
+    {
+      "id": "news_detail",
+      "name": "News Detail / Article View",
+      "category": "core",
+      "status": "live",
+      "description": "Opens the full source article in an in-app browser (Expo WebBrowser). Accessed by tapping any news card. Tracks article open analytics event with category and source.",
+      "screens": ["/news/[id] → opens expo-web-browser"],
+      "data_sources": {
+        "tables": ["news_updates"],
+        "fields_used": ["source_url", "title", "id", "category", "source_name"],
+        "edge_functions": [],
+        "storage_buckets": [],
+        "async_storage_keys": []
+      },
+      "interactions": [
+        "Tap news card → haptic feedback + open source URL in in-app browser",
+        "Browser has back/close/share controls"
+      ],
+      "analytics_events": ["news_opened(id, category, source)"],
+      "dependencies": ["news_feed"],
+      "sub_features": []
+    },
+
+    {
+      "id": "reels",
+      "name": "Video Reels (YouTube Shorts)",
+      "category": "content",
+      "status": "live",
+      "description": "TikTok/Instagram Reels–style full-screen vertical video feed of Telugu news YouTube Shorts. Lazy-loads YouTube embeds for visible and adjacent items only. Supports swipe-to-next, action bar, reporter follows, polls, and sharing.",
+      "screens": ["/(tabs)/reels"],
+      "data_sources": {
+        "tables": ["reels", "live_channels"],
+        "query_constraints": {
+          "max_reels": 120,
+          "filter": "is_short = true preferred",
+          "order": "created_at DESC"
+        },
+        "edge_functions": [],
+        "storage_buckets": [],
+        "async_storage_keys": ["offline_reels_v1", "offline_reels_ts_v1"]
+      },
+      "player": {
+        "type": "YouTube embed via react-native-webview",
+        "no_cookie_domain": "youtube-nocookie.com",
+        "lazy_load": "visible item + 1 adjacent each direction",
+        "controls": ["play/pause toggle", "mute", "fullscreen via YouTube"],
+        "autoplay": "muted on scroll into view",
+        "fallback": "thumbnail + open YouTube button"
+      },
+      "filter_chips": ["All", "Channels", "Reporters", "Following"],
+      "content_chips": ["Latest", "Local", "Politics", "Movies", "Sports", "Trending"],
+      "channel_picker_modal": "searchable list of channels from live_channels table",
+      "actions": [
+        "Like → local toggle with haptic",
+        "Dislike → local toggle",
+        "WhatsApp share → share reel URL",
+        "Native share → system share sheet",
+        "Send to Chat → save share draft, open chat tab",
+        "Poll → open Poll modal",
+        "Follow reporter → toggle follow state"
+      ],
+      "poll_modal": {
+        "status": "hardcoded sample data",
+        "note": "DB-backed polling planned"
+      },
+      "analytics_events": ["reel_watched(id, completed)"],
+      "dependencies": ["reporter_follow", "offline_cache"],
+      "sub_features": []
+    },
+
+    {
+      "id": "live_tv",
+      "name": "Live TV Channels",
+      "category": "content",
+      "status": "live",
+      "description": "Browse and watch live Telugu news channels. Sticky embedded YouTube player at top. Channel list with live/offline/featured badges. Tap any channel to switch stream. Supports filter chips by channel name.",
+      "screens": ["/(tabs)/live"],
+      "data_sources": {
+        "tables": ["live_channels"],
+        "query_constraints": {
+          "max_channels": 30,
+          "order": "sort_order ASC"
+        },
+        "edge_functions": [],
+        "storage_buckets": [],
+        "async_storage_keys": []
+      },
+      "player": {
+        "type": "YouTube embed via react-native-webview",
+        "position": "sticky top of screen",
+        "no_cookie_domain": "youtube-nocookie.com",
+        "user_agent_spoof": true,
+        "controls": ["play", "stop", "open in YouTube"],
+        "error_state": "retry button with error message"
+      },
+      "channel_fields": [
+        "channel_name",
+        "logo_url",
+        "video_id",
+        "official_url",
+        "badge (live | offline | featured)",
+        "description",
+        "is_active",
+        "sort_order"
+      ],
+      "badges": {
+        "live": { "color": "#e53e3e", "icon": "blinking dot" },
+        "featured": { "color": "#0a9b9a" },
+        "offline": { "color": "gray" }
+      },
+      "interactions": [
+        "Tap channel row → load that channel's video_id in player",
+        "Filter chip → filter visible channels by name",
+        "Play/Stop button → toggle playback in embedded player",
+        "Watch on YouTube button → open official_url in browser"
+      ],
+      "analytics_events": ["live_channel_opened(id, name)"],
+      "dependencies": [],
+      "sub_features": []
+    },
+
+    {
+      "id": "direct_messaging",
+      "name": "Direct Messaging (Chat)",
+      "category": "social",
+      "status": "live",
+      "description": "1-to-1 real-time direct messaging between authenticated users. Supports text, image (ephemeral: once-view or 24h), and share-card messages (news/reel/live channel). Auth wall gates access. Online presence indicators. Transactional outbox ensures push notification delivery.",
+      "screens": ["/(tabs)/chat", "/chat/[id]"],
+      "data_sources": {
+        "tables": ["chat_users", "conversations", "dm_messages", "message_outbox"],
+        "storage_buckets": ["chat-images (signed URLs, 24h expiry)"],
+        "edge_functions": ["outbox-worker (push notification delivery)"],
+        "async_storage_keys": [
+          "telugu_chat_display_name",
+          "pref_username",
+          "telugu_pending_share_draft_v1"
+        ]
+      },
+      "message_types": {
+        "text": {
+          "max_length": 1000,
+          "rate_limit": "20 per minute per user"
+        },
+        "image": {
+          "view_modes": ["once (single view then expired)", "24h (expires after 24 hours)"],
+          "storage": "chat-images Supabase bucket",
+          "rate_limit": "6 per minute per user",
+          "status": "coming soon (UI present, upload gated)"
+        },
+        "share": {
+          "targets": ["news article", "reel", "live channel"],
+          "fields": ["shared_kind", "shared_title", "shared_url", "shared_image_url"],
+          "rate_limit": "12 per minute per user"
+        }
+      },
+      "realtime": {
+        "provider": "Supabase Realtime (Postgres Changes)",
+        "channel": "per-conversation subscription",
+        "events": ["INSERT on dm_messages"]
+      },
+      "presence": {
+        "fields": ["is_online", "last_seen_at"],
+        "table": "chat_users"
+      },
+      "resilience": {
+        "idempotency": "client_tag UUID (RFC4122 v4) prevents duplicate writes",
+        "double_submit_guard": "1500ms window blocks re-taps",
+        "rate_limiting": "client-side AsyncStorage buckets per action type",
+        "outbox_pattern": "message_outbox table + outbox-worker edge function ensures push delivery"
+      },
+      "user_discovery": {
+        "fetch_all": "fetchAvailableUsers() — all chat_users",
+        "search": "searchUsers(query) — display_name ilike match"
+      },
+      "interactions": [
+        "Auth wall → sign up / sign in with email + password",
+        "User list → search by name, tap to open conversation",
+        "Send text message → rate-limited, idempotent, real-time delivery",
+        "Send share card (news/reel/live) → mini card with title + thumbnail + tap-to-open",
+        "Send image → once-view or 24h ephemeral (coming soon)",
+        "Tap shared news card → open source URL",
+        "Tap shared reel → navigate to reels",
+        "Online dot → shows is_online status",
+        "Share pending banner → shows when share draft from news/reels is waiting to be sent"
+      ],
+      "analytics_events": ["chat_message_sent(type: 'text' | 'image' | 'share')"],
+      "dependencies": ["auth", "notifications"],
+      "sub_features": []
+    },
+
+    {
+      "id": "reporter_system",
+      "name": "Reporter / Creator Portal",
+      "category": "creator",
+      "status": "live",
+      "description": "Content creator portal for uploading user-generated news articles and YouTube Shorts reels. Requires separate email/password login. Reporters can manage (edit/delete) their own posts. Uploaded content appears in the main news feed and reels feed tagged with reporter info.",
+      "screens": ["/profile/reporter"],
+      "data_sources": {
+        "tables": ["reporter_profiles", "news_updates", "reels"],
+        "storage_buckets": ["reporter-news-images (path: {userId}/{timestamp}.{ext})"],
+        "edge_functions": [],
+        "async_storage_keys": []
+      },
+      "auth": {
+        "type": "Supabase email/password",
+        "separate_from_chat_auth": true,
+        "note": "Reporter login is independent of chat/main app auth"
+      },
+      "reporter_profile_fields": [
+        "display_name",
+        "bio (max 280 chars)",
+        "avatar_url"
+      ],
+      "news_upload_fields": [
+        "title (required)",
+        "description",
+        "category (dropdown from NEWS_CATEGORIES)",
+        "image (image picker → uploaded to reporter-news-images bucket)",
+        "source_url",
+        "source_name"
+      ],
+      "reel_upload_fields": [
+        "title (required)",
+        "youtube_shorts_url (validated: must be YouTube Shorts format)",
+        "channel",
+        "tag",
+        "category"
+      ],
+      "image_upload": {
+        "rate_limit": "8 images per minute per user",
+        "storage_path": "{userId}/{timestamp}.{ext}",
+        "supported_formats": ["jpg", "jpeg", "png", "webp"]
+      },
+      "post_management": [
+        "List own news articles",
+        "List own reels",
+        "Edit post (update fields)",
+        "Delete post (removes from DB)"
+      ],
+      "interactions": [
+        "Sign up / sign in as reporter",
+        "Edit reporter bio and display name",
+        "Upload news article with image",
+        "Upload reel with YouTube Shorts URL",
+        "Edit existing post",
+        "Delete post with confirmation"
+      ],
+      "analytics_events": [],
+      "dependencies": ["auth"],
+      "sub_features": []
+    },
+
+    {
+      "id": "reporter_follow",
+      "name": "Follow Reporters",
+      "category": "social",
+      "status": "live",
+      "description": "Users can follow/unfollow news reporters. Followed reporters' articles appear in the 'Following' category. Self-follow is blocked. Follower count displayed on reporter cards. Rate-limited to prevent spam.",
+      "screens": ["/(tabs)/index (action bar)", "/(tabs)/reels (action bar)"],
+      "data_sources": {
+        "tables": ["reporter_follows", "reporter_profiles"],
+        "edge_functions": [],
+        "storage_buckets": [],
+        "async_storage_keys": []
+      },
+      "follow_state": {
+        "fields": ["following (bool)", "canFollow (bool)", "isSelf (bool)"],
+        "self_follow_blocked": true,
+        "rate_limit": "20 follow/unfollow actions per minute"
+      },
+      "interactions": [
+        "Follow button → toggle follow, update reporter_follows table",
+        "Unfollow button → remove from reporter_follows",
+        "Following category chip → filter feed to followed reporters' articles"
+      ],
+      "analytics_events": ["reporter_followed(reporterId)"],
+      "dependencies": ["auth"],
+      "sub_features": []
+    },
+
+    {
+      "id": "notifications",
+      "name": "Push Notifications",
+      "category": "system",
+      "status": "live",
+      "description": "Expo-powered push notifications with per-category opt-in toggles. Notification tap routes the user to the relevant screen (news, reels, live). Local test notifications available from settings. Outbox worker handles server-side push delivery.",
+      "screens": ["/profile/notifications"],
+      "data_sources": {
+        "tables": [],
+        "edge_functions": ["outbox-worker (Expo push delivery)"],
+        "storage_buckets": [],
+        "async_storage_keys": [
+          "notification_prefs_v1 (per-category toggles)",
+          "expo_push_token_v1 (cached device token)"
+        ]
+      },
+      "categories": [
+        { "id": "breaking_news", "label": "Breaking News", "default": true },
+        { "id": "morning_digest", "label": "Morning Digest", "default": true },
+        { "id": "evening_recap", "label": "Evening Recap", "default": false },
+        { "id": "district_updates", "label": "District Updates", "default": true },
+        { "id": "job_alerts", "label": "Job Alerts", "default": false },
+        { "id": "movie_news", "label": "Movie News", "default": true },
+        { "id": "ttd_updates", "label": "TTD Updates", "default": false },
+        { "id": "live_tv_alerts", "label": "Live TV Alerts", "default": false }
+      ],
+      "notification_routing": {
+        "data.screen = 'reels'": "navigate to /(tabs)/reels",
+        "data.screen = 'live'": "navigate to /(tabs)/live",
+        "default": "navigate to /(tabs)/index"
+      },
+      "local_notifications": {
+        "immediate": "sendLocalNotification(title, body, data)",
+        "scheduled": "sendDelayedNotification(title, body, data, delaySec)",
+        "breaking_news_demo": "sample breaking news notification for testing"
+      },
+      "platform_notes": {
+        "expo_go": "Remote push disabled in SDK 53+; local notifications work",
+        "web": "Push notifications not supported",
+        "android": "Sound + badge + alert + banner + list enabled",
+        "ios": "Sound + badge + alert enabled"
+      },
+      "interactions": [
+        "Toggle per-category switch → save pref to AsyncStorage",
+        "Send Breaking News test → immediate local notification",
+        "Send Morning Digest test → delayed local notification",
+        "View push token → copy-able for testing"
+      ],
+      "analytics_events": [],
+      "dependencies": [],
+      "sub_features": []
+    },
+
+    {
+      "id": "offline_cache",
+      "name": "Offline Caching",
+      "category": "system",
+      "status": "live",
+      "description": "AsyncStorage-backed offline cache for news and reels. When network is unavailable, the app shows cached content with an offline banner displaying cache age. News cache holds 200 articles max with 24h TTL. Reels cache holds 80 items. Chat share drafts are also persisted for resumption.",
+      "screens": ["/(tabs)/index (offline banner)", "/(tabs)/reels"],
+      "data_sources": {
+        "tables": [],
+        "edge_functions": [],
+        "storage_buckets": [],
+        "async_storage_keys": [
+          "offline_news_v2 (JSON array of NewsUpdate, max 200)",
+          "offline_news_ts_v2 (ISO timestamp of last cache write)",
+          "offline_reels_v1 (JSON array of Reel, max 80)",
+          "offline_reels_ts_v1 (ISO timestamp)",
+          "telugu_pending_share_draft_v1 (pending share to chat)"
+        ]
+      },
+      "cache_policies": {
+        "news": {
+          "max_items": 200,
+          "ttl_hours": 24,
+          "filter_on_read": "exclude articles older than 24h"
+        },
+        "reels": {
+          "max_items": 80,
+          "ttl": "no enforced TTL on read"
+        }
+      },
+      "offline_ui": {
+        "banner": "shows when isError && cache.articles.length > 0",
+        "message": "Offline — showing cached news from {formatCacheAge(cachedAt)}",
+        "retry_button": "tap to refetch"
+      },
+      "interactions": [
+        "Automatic fallback on network error",
+        "Retry button on offline banner → manual refetch",
+        "Cache updates silently on every successful fetch"
+      ],
+      "analytics_events": [],
+      "dependencies": [],
+      "sub_features": []
+    },
+
+    {
+      "id": "user_profile",
+      "name": "User Profile & Settings",
+      "category": "settings",
+      "status": "live",
+      "description": "Profile hub screen with navigation to all settings sub-screens. Covers account info, chat privacy, notification preferences, display settings, language, legal, and account actions. Settings are persisted to AsyncStorage.",
+      "screens": [
+        "/(tabs)/profile",
+        "/profile/edit",
+        "/profile/display",
+        "/profile/language",
+        "/profile/notifications",
+        "/profile/about",
+        "/profile/saved",
+        "/profile/history"
+      ],
+      "data_sources": {
+        "tables": ["chat_users"],
+        "edge_functions": [],
+        "storage_buckets": [],
+        "async_storage_keys": [
+          "telugu_chat_display_name",
+          "pref_username",
+          "notification_prefs_v1",
+          "pref_font_size",
+          "pref_language",
+          "pref_interests"
+        ]
+      },
+      "settings_sections": {
+        "account": [
+          { "label": "Edit Profile", "route": "/profile/edit" },
+          { "label": "Reporter Studio", "route": "/profile/reporter" }
+        ],
+        "chat_privacy": [
+          { "label": "Lock Chat", "type": "toggle", "status": "coming soon" },
+          { "label": "Change Username", "route": "/profile/edit" }
+        ],
+        "notifications": [
+          { "label": "Notifications", "type": "toggle" },
+          { "label": "Breaking News Alerts", "type": "toggle" },
+          { "label": "Alert Settings", "route": "/profile/notifications" }
+        ],
+        "app": [
+          { "label": "Rate the App", "action": "open app store" },
+          { "label": "Share with Friends", "action": "native share" },
+          { "label": "Feedback", "action": "mailto" },
+          { "label": "About", "route": "/profile/about" }
+        ],
+        "legal": [
+          { "label": "Privacy Policy", "action": "open URL" },
+          { "label": "Terms of Service", "action": "open URL" }
+        ],
+        "account_actions": [
+          { "label": "Sign Out", "style": "destructive", "action": "clear session" }
+        ]
+      },
+      "edit_profile_fields": {
+        "display_name": "free text, stored in chat_users + AsyncStorage",
+        "username": "3-24 chars, lowercase, letters/numbers/underscore only",
+        "interests": ["Top", "Jobs", "Districts", "Movies", "TTD", "Exams", "Sports", "Politics"]
+      },
+      "display_settings": {
+        "font_size": ["Small", "Default", "Large"]
+      },
+      "language_options": ["Telugu", "English", "Hindi", "Tamil", "Kannada"],
+      "analytics_events": [],
+      "dependencies": ["auth"],
+      "sub_features": []
+    },
+
+    {
+      "id": "auth",
+      "name": "Authentication",
+      "category": "system",
+      "status": "live",
+      "description": "Supabase email/password authentication. Session persisted to AsyncStorage with auto-refresh. Auth gates access to chat, reporter studio, reporter follow, and Following category. Sign-out clears session.",
+      "screens": ["/(tabs)/chat (inline auth wall)", "/profile/reporter (inline auth wall)"],
+      "data_sources": {
+        "tables": ["auth.users (managed by Supabase)"],
+        "edge_functions": [],
+        "storage_buckets": [],
+        "async_storage_keys": ["supabase_auth_session (managed by supabase-js)"]
+      },
+      "auth_methods": ["email + password"],
+      "session": {
+        "persistence": "AsyncStorage via @react-native-async-storage/async-storage",
+        "auto_refresh": true,
+        "listener": "onAuthStateChange in app/_layout.tsx"
+      },
+      "auth_wall_screens": ["chat tab", "reporter studio"],
+      "interactions": [
+        "Sign up with email + password + display name + username",
+        "Sign in with email + password",
+        "Sign out → clears session, returns to unauthenticated state",
+        "Auth state change → updates global auth context"
+      ],
+      "analytics_events": [],
+      "dependencies": [],
+      "sub_features": []
+    },
+
+    {
+      "id": "bookmarks",
+      "name": "Saved / Bookmarks",
+      "category": "core",
+      "status": "placeholder",
+      "description": "Bookmark news articles for later reading. Currently shows an empty state with a 'Browse News' CTA. DB persistence and sync planned for future release.",
+      "screens": ["/profile/saved"],
+      "data_sources": {
+        "tables": [],
+        "edge_functions": [],
+        "storage_buckets": [],
+        "async_storage_keys": []
+      },
+      "planned_features": [
+        "Save article to local AsyncStorage bookmarks list",
+        "Sync bookmarks to Supabase user_bookmarks table",
+        "Filter bookmarks by category",
+        "Delete individual bookmarks",
+        "Clear all bookmarks"
+      ],
+      "interactions": [
+        "Bookmark button in news card action bar → saves article",
+        "Browse News button in empty state → navigate to news feed"
+      ],
+      "analytics_events": ["news_bookmarked(id)"],
+      "dependencies": ["news_feed"],
+      "sub_features": []
+    },
+
+    {
+      "id": "history",
+      "name": "Viewing History",
+      "category": "core",
+      "status": "partial",
+      "description": "Shows recently viewed news articles and reels. Currently powered by mock data — not persisted to DB or AsyncStorage. Delete and clear-all actions work in-memory only within the session.",
+      "screens": ["/profile/history"],
+      "data_sources": {
+        "tables": [],
+        "edge_functions": [],
+        "storage_buckets": [],
+        "async_storage_keys": []
+      },
+      "current_limitations": "Mock data only — not persisted across app sessions",
+      "planned_features": [
+        "Persist view history to AsyncStorage on article/reel open",
+        "Sync history to Supabase user_history table",
+        "History grouped by date",
+        "Auto-clear after 30 days"
+      ],
+      "interactions": [
+        "Tap history item → open article or reel",
+        "Delete icon → remove from list (in-memory)",
+        "Clear all button → empty the list"
+      ],
+      "analytics_events": [],
+      "dependencies": ["news_feed", "reels"],
+      "sub_features": []
+    },
+
+    {
+      "id": "analytics",
+      "name": "Analytics & Telemetry",
+      "category": "system",
+      "status": "live",
+      "description": "Dual-provider analytics system. PostHog tracks product events (user behaviour, feature adoption). Sentry captures errors and crashes. Both are env-key gated — silent no-ops in dev when keys are absent.",
+      "screens": [],
+      "data_sources": {
+        "tables": [],
+        "edge_functions": [],
+        "storage_buckets": [],
+        "async_storage_keys": []
+      },
+      "providers": {
+        "posthog": {
+          "sdk": "posthog-react-native ^4.46.12",
+          "env_key": "EXPO_PUBLIC_POSTHOG_API_KEY",
+          "host": "https://app.posthog.com",
+          "flush": "10 events or 10 second interval",
+          "methods": ["track(name, props)", "identify(userId, traits)", "reset()"]
+        },
+        "sentry": {
+          "sdk": "@sentry/react-native ^8.13.0",
+          "env_key": "EXPO_PUBLIC_SENTRY_DSN",
+          "captures": ["unhandled errors", "crashes", "logger.error calls"]
+        }
+      },
+      "events": [
+        {
+          "name": "onboarding_completed",
+          "params": ["category"],
+          "trigger": "User completes onboarding category selection"
+        },
+        {
+          "name": "news_opened",
+          "params": ["id", "category", "source"],
+          "trigger": "User taps a news card"
+        },
+        {
+          "name": "news_shared",
+          "params": ["id", "channel: 'whatsapp' | 'native' | 'chat'"],
+          "trigger": "User shares an article via any channel"
+        },
+        {
+          "name": "news_bookmarked",
+          "params": ["id"],
+          "trigger": "User bookmarks an article"
+        },
+        {
+          "name": "reel_watched",
+          "params": ["id", "completed: boolean"],
+          "trigger": "Reel plays (completed=true if watched past 90%)"
+        },
+        {
+          "name": "live_channel_opened",
+          "params": ["id", "name"],
+          "trigger": "User taps a live channel"
+        },
+        {
+          "name": "chat_message_sent",
+          "params": ["type: 'text' | 'image' | 'share'"],
+          "trigger": "Message successfully inserted to DB"
+        },
+        {
+          "name": "reporter_followed",
+          "params": ["reporterId"],
+          "trigger": "User follows a reporter"
+        },
+        {
+          "name": "search_performed",
+          "params": ["query", "resultCount"],
+          "trigger": "Search results returned"
+        },
+        {
+          "name": "breaking_news_tapped",
+          "params": ["id"],
+          "trigger": "User taps a breaking news notification"
+        }
+      ],
+      "analytics_events": [],
+      "dependencies": [],
+      "sub_features": []
+    },
+
+    {
+      "id": "news_ingest_pipeline",
+      "name": "Server-Side News Ingestion",
+      "category": "system",
+      "status": "live",
+      "description": "Automated server-side pipeline running as a Supabase Edge Function. Fetches RSS feeds, scrapes full article text, summarizes to 75-80 words using Gemini 2.5 Flash, deduplicates, and inserts into news_updates. Also cleans up articles older than 24 hours. Triggered by cron with secret header.",
+      "screens": [],
+      "data_sources": {
+        "tables": ["rss_sources", "news_updates"],
+        "edge_functions": ["ingest-news"],
+        "storage_buckets": [],
+        "async_storage_keys": []
+      },
+      "edge_function": {
+        "name": "ingest-news",
+        "path": "supabase/functions/ingest-news/index.ts",
+        "trigger": "POST with x-cron-secret header",
+        "env_secrets": ["GEMINI_API_KEY", "SUPABASE_URL", "SUPABASE_SERVICE_ROLE_KEY", "CRON_SECRET"]
+      },
+      "pipeline_steps": [
+        "1. Authenticate request via x-cron-secret header",
+        "2. Fetch active RSS sources from rss_sources table",
+        "3. Parse RSS XML: extract title, link, description, image (media:content / enclosure / og:image)",
+        "4. Fetch full HTML from source URL (User-Agent: TeluguENewspaperBot/1.0)",
+        "5. Extract article body: article/main tags → paragraphs → meta description",
+        "6. Summarize to 75-80 words using Gemini 2.5 Flash (fallback: truncate)",
+        "7. Insert into news_updates with UNIQUE(source_url) conflict = ignore",
+        "8. Backfill: update articles from last 24h that have long descriptions",
+        "9. Auto-cleanup: delete articles older than 24 hours"
+      ],
+      "gemini_integration": {
+        "model": "gemini-2.5-flash",
+        "prompt": "Summarize to 75-80 words in source language, factual and concise",
+        "api_key_location": "Supabase Edge Secret GEMINI_API_KEY (NOT in client code)",
+        "fallback": "truncate to 80 words if API unavailable"
+      },
+      "rss_sources_table": {
+        "fields": ["id", "name", "feed_url", "category", "is_active", "license_status"],
+        "active_filter": "is_active = true"
+      },
+      "request_params": {
+        "limitPerFeed": "1-50 articles per RSS source (default 25)",
+        "backfillLimit": "0-200 articles to re-summarize (default 50)",
+        "dryRun": "boolean — run without writing to DB"
+      },
+      "response_shape": {
+        "ok": "boolean",
+        "feeds": "number of sources processed",
+        "fetched": "total articles fetched",
+        "unique": "articles after dedup",
+        "inserted": "new articles written to DB",
+        "backfill": { "checked": "number", "updated": "number" },
+        "dryRun": "boolean",
+        "summarizedBy": "'gemini' | 'truncate'"
+      },
+      "outbox_worker": {
+        "name": "outbox-worker",
+        "path": "supabase/functions/outbox-worker/index.ts",
+        "purpose": "Drain message_outbox table and deliver push notifications via Expo push service",
+        "trigger": "cron or manual",
+        "process": [
+          "claim_outbox_batch(50) → atomically claim pending events",
+          "Lookup recipient Expo push tokens",
+          "POST to https://exp.host/--/api/v2/push/send",
+          "mark_outbox_done() → finalize processed rows"
+        ]
+      },
+      "analytics_events": [],
+      "dependencies": [],
+      "sub_features": []
+    }
+  ]
+}
