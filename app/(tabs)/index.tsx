@@ -216,7 +216,7 @@ const CategoryBar = memo(function CategoryBar({
   );
 });
 
-// ─── Sort Dropdown ─────────────────────────────────────────────────────────────
+// ─── Sort Sheet (bottom sheet modal) ──────────────────────────────────────────
 
 const SortBtn = memo(function SortBtn({
   sortOption,
@@ -227,34 +227,49 @@ const SortBtn = memo(function SortBtn({
 }) {
   const [open, setOpen] = useState(false);
   return (
-    <View>
+    <>
       <TouchableOpacity
-        onPress={() => setOpen((v) => !v)}
+        onPress={() => setOpen(true)}
         activeOpacity={0.75}
-        style={styles.sortBtn}
+        style={styles.sortIconBtn}
+        accessibilityRole="button"
+        accessibilityLabel={`Sort: ${sortOption}`}
+        hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
       >
-        <Feather name="sliders" size={12} color="rgba(255,255,255,0.55)" />
-        <Text style={styles.sortBtnText}>{sortOption}</Text>
-        <Feather name={open ? "chevron-up" : "chevron-down"} size={11} color="rgba(255,255,255,0.35)" />
+        <Feather name="sliders" size={16} color="rgba(255,255,255,0.78)" />
       </TouchableOpacity>
-      {open && (
-        <View style={styles.sortSheet}>
-          {SORT_OPTIONS.map((opt) => (
-            <TouchableOpacity
-              key={opt}
-              onPress={() => { onSort(opt); setOpen(false); }}
-              activeOpacity={0.75}
-              style={styles.sortOption}
-            >
-              <Text style={[styles.sortOptionText, opt === sortOption && styles.sortOptionActive]}>
-                {opt}
-              </Text>
-              {opt === sortOption && <Feather name="check" size={13} color="#0a9b9a" />}
-            </TouchableOpacity>
-          ))}
-        </View>
-      )}
-    </View>
+
+      <Modal
+        visible={open}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setOpen(false)}
+      >
+        <TouchableOpacity
+          style={styles.sortScrim}
+          activeOpacity={1}
+          onPress={() => setOpen(false)}
+        >
+          <View style={styles.sortSheetModal} onStartShouldSetResponder={() => true}>
+            <View style={styles.sortHandle} />
+            <Text style={styles.sortSheetTitle}>Sort by</Text>
+            {SORT_OPTIONS.map((opt) => (
+              <TouchableOpacity
+                key={opt}
+                onPress={() => { onSort(opt); setOpen(false); }}
+                activeOpacity={0.75}
+                style={styles.sortOption}
+              >
+                <Text style={[styles.sortOptionText, opt === sortOption && styles.sortOptionActive]}>
+                  {opt}
+                </Text>
+                {opt === sortOption && <Feather name="check" size={16} color="#0a9b9a" />}
+              </TouchableOpacity>
+            ))}
+          </View>
+        </TouchableOpacity>
+      </Modal>
+    </>
   );
 });
 
