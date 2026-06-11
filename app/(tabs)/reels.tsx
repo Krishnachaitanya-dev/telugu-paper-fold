@@ -165,14 +165,13 @@ const SideActions = memo(function SideActions({
           <View style={[styles.sideBtnIcon, disliked && styles.sideBtnIconDislike]}>
             <Feather name="thumbs-down" size={20} color={disliked ? "#ff9f40" : "#fff"} />
           </View>
-          <Text style={styles.sideBtnLabel}>Dislike</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity onPress={handleWhatsApp} style={styles.sideBtn} activeOpacity={0.75}>
+        <TouchableOpacity onPress={handleShareToChat} style={styles.sideBtn} activeOpacity={0.75}>
           <View style={styles.sideBtnIcon}>
-            <MaterialCommunityIcons name="whatsapp" size={22} color="#25D366" />
+            <Feather name="message-circle" size={20} color="#fff" />
           </View>
-          <Text style={styles.sideBtnLabel}>WhatsApp</Text>
+          <Text style={styles.sideBtnLabel}>Chat</Text>
         </TouchableOpacity>
 
         <TouchableOpacity onPress={handleShare} style={styles.sideBtn} activeOpacity={0.75}>
@@ -182,18 +181,10 @@ const SideActions = memo(function SideActions({
           <Text style={styles.sideBtnLabel}>Share</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity onPress={handleShareToChat} style={styles.sideBtn} activeOpacity={0.75}>
+        <TouchableOpacity onPress={handleWhatsApp} style={styles.sideBtn} activeOpacity={0.75}>
           <View style={styles.sideBtnIcon}>
-            <Feather name="send" size={20} color="#fff" />
+            <MaterialCommunityIcons name="whatsapp" size={22} color="#25D366" />
           </View>
-          <Text style={styles.sideBtnLabel}>Chat</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity onPress={() => setPollOpen(true)} style={styles.sideBtn} activeOpacity={0.75}>
-          <View style={[styles.sideBtnIcon, styles.sideBtnIconPoll]}>
-            <Feather name="bar-chart-2" size={20} color="#0a9b9a" />
-          </View>
-          <Text style={[styles.sideBtnLabel, { color: "#0a9b9a" }]}>Poll</Text>
         </TouchableOpacity>
 
         {reel.reporter_id && !isSelfReporter ? (
@@ -201,19 +192,13 @@ const SideActions = memo(function SideActions({
             <View style={[styles.sideBtnIcon, following && styles.sideBtnIconFollow]}>
               <Feather name={following ? "user-check" : "user-plus"} size={20} color={following ? "#0a9b9a" : "#fff"} />
             </View>
-            <Text style={[styles.sideBtnLabel, following && { color: "#0a9b9a" }]}>
-              {following ? "Following" : "Follow"}
-            </Text>
           </TouchableOpacity>
         ) : null}
 
-        <TouchableOpacity onPress={onToggleMute} style={styles.sideBtn} activeOpacity={0.75}>
-          <View style={[styles.sideBtnIcon, muted && styles.sideBtnIconMuted]}>
-            <Feather name={muted ? "volume-x" : "volume-2"} size={22} color={muted ? "#ff9f40" : "#fff"} />
+        <TouchableOpacity onPress={() => setPollOpen(true)} style={styles.sideBtn} activeOpacity={0.75}>
+          <View style={[styles.sideBtnIcon, styles.sideBtnIconPoll]}>
+            <Feather name="bar-chart-2" size={20} color="#0a9b9a" />
           </View>
-          <Text style={[styles.sideBtnLabel, muted && { color: "#ff9f40" }]}>
-            {muted ? "Unmute" : "Sound"}
-          </Text>
         </TouchableOpacity>
       </View>
 
