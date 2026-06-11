@@ -664,12 +664,31 @@ export default function ReelsScreen() {
         maxToRenderPerBatch={2}
         windowSize={4}
         updateCellsBatchingPeriod={40}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor="#0a9b9a"
+            colors={["#0a9b9a"]}
+            progressViewOffset={topPad + HEADER_H + CHIP_BAR_H}
+          />
+        }
         ListEmptyComponent={
-          <View style={[styles.fullCenter, { backgroundColor: "#0a0c10" }]}>
+          <View style={[styles.fullCenter, { backgroundColor: "#0a0c10", paddingTop: 120 }]}>
             <View style={styles.statusIconWrap}>
-              <Feather name="video-off" size={24} color="rgba(255,255,255,0.3)" />
+              <Feather name="video-off" size={24} color="#0a9b9a" />
             </View>
-            <Text style={styles.emptyText}>No reels here</Text>
+            <Text style={styles.errorText}>No reels to show</Text>
+            <Text style={styles.loadingText}>
+              Pull down to refresh or pick another filter.
+            </Text>
+            <TouchableOpacity
+              style={styles.retryBtn}
+              onPress={() => { console.log("[Reels] empty Retry tapped"); refetch(); }}
+              activeOpacity={0.8}
+            >
+              <Text style={styles.retryBtnText}>Retry</Text>
+            </TouchableOpacity>
           </View>
         }
       />
