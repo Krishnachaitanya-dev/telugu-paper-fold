@@ -417,8 +417,21 @@ export default function NewsScreen() {
     })
   );
 
+  const debugLabel = showSpinner
+    ? "NewsScreen · loading"
+    : showError
+    ? "NewsScreen · error"
+    : displayData.length === 0
+    ? "NewsScreen · empty"
+    : `NewsScreen · NewspaperFeed (${displayData.length})`;
+
   return (
     <View style={styles.container}>
+      {/* TEMP DEBUG LABEL — remove when done */}
+      <View pointerEvents="none" style={debugStyles.wrap}>
+        <Text style={debugStyles.text}>{debugLabel}</Text>
+      </View>
+
 
       {/* ══════════════════ CATEGORY CHIPS ════════════════════════════════════ */}
       <View style={[styles.chipBar, { top: topPad }]}>
