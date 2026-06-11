@@ -4,9 +4,9 @@ import { Image, PanResponder, Platform, StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { useColors } from "@/hooks/useColors";
-import { SafeIcon } from "@/components/SafeIcon";
 
 const TAB_ICONS = {
+  news:    require("../../assets/tab-icons/icon-news.png"),
   reels:   require("../../assets/tab-icons/icon-reels.png"),
   live:    require("../../assets/tab-icons/icon-live.png"),
   chat:    require("../../assets/tab-icons/icon-chat.png"),
