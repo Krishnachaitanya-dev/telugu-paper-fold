@@ -422,6 +422,9 @@ export default function ReelsScreen() {
   const [followedReporterIds, setFollowedReporterIds] = useState<string[]>([]);
   const [cache, setCache] = useState<ReelsCacheResult>({ reels: [], cachedAt: null });
   const [cacheLoaded, setCacheLoaded] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+
+  useEffect(() => { console.log("[Reels] screen mounted"); }, []);
 
   const topPad = Platform.OS === "web" ? 67 : insets.top;
   const HEADER_H = 46;
