@@ -16,7 +16,7 @@ function breakerFor(url: string): CircuitBreaker {
   }
   let b = breakers.get(host);
   if (!b) {
-    b = new CircuitBreaker({ name: host, failureThreshold: 5, resetTimeoutMs: 30_000 });
+    b = new CircuitBreaker({ name: host, failureThreshold: 8, resetTimeoutMs: 5_000 });
     breakers.set(host, b);
   }
   return b;
