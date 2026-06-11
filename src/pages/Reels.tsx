@@ -26,11 +26,11 @@ export default function Reels() {
         entries.forEach((e) => {
           const idx = Number((e.target as HTMLElement).dataset.idx);
           if (!isFinite(idx)) return;
-          if (e.isIntersecting && (!best || e.intersectionRatio > best.ratio)) {
+          if (e.isIntersecting && (best === null || e.intersectionRatio > best.ratio)) {
             best = { idx, ratio: e.intersectionRatio };
           }
         });
-        if (best) setActiveIdx(best.idx);
+        if (best !== null) setActiveIdx((best as { idx: number }).idx);
       },
       { root, threshold: [0.55, 0.75, 0.95] }
     );
