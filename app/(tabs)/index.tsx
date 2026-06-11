@@ -398,7 +398,12 @@ export default function NewsScreen() {
   const showSpinner = (!cacheLoaded || isLoading) && cache.articles.length === 0 && !freshData;
   const showError   = isError && cache.articles.length === 0;
 
+  useEffect(() => {
+    console.log(`[News] render — items=${displayData.length} loading=${isLoading} error=${isError} cache=${cache.articles.length}`);
+  }, [displayData.length, isLoading, isError, cache.articles.length]);
+
   const onRefresh = useCallback(async () => {
+    console.log("[News] pull-to-refresh");
     setRefreshing(true);
     await refetch();
     setRefreshing(false);
