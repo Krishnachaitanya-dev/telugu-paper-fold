@@ -198,6 +198,7 @@ export default function RootLayout() {
               <ToastProvider>
                 <RootLayoutNav />
                 {showSplash ? <BrandedSplash /> : null}
+                {!showSplash && showNavFallback ? <NavFallback /> : null}
               </ToastProvider>
             </KeyboardProvider>
           </GestureHandlerRootView>
