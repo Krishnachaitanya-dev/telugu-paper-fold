@@ -20,6 +20,7 @@ import { createPostHogClient } from "@/core/analytics/posthogClient";
 import { env } from "@/core/env/env";
 import { backoffWithJitter } from "@/core/resilience/backoff";
 import { ToastProvider } from "@/shared/feedback/ToastProvider";
+import { setIconFontStatus } from "@/lib/iconFontStatus";
 
 // Initialize Sentry before any rendering
 if (env.sentryDsn && !__DEV__) {
@@ -92,10 +93,19 @@ export default function RootLayout() {
   const [showSplash, setShowSplash] = useState(true);
 
   useEffect(() => {
-    if (!fontsLoaded) return;
+    // If icon fonts don't load within 5s, mark failed so SafeIcon swaps to SVG fallbacks.
+    const failTimer = setTimeout(() => {
+      if (!fontsLoaded) setIconFontStatus("failed");
+    }, 5000);
+    if (!fontsLoaded) return () => clearTimeout(failTimer);
+
+    setIconFontStatus("loaded");
     SplashScreen.hideAsync().catch(() => {});
     const timer = setTimeout(() => setShowSplash(false), SPLASH_DURATION_MS);
-    return () => clearTimeout(timer);
+    return () => {
+      clearTimeout(timer);
+      clearTimeout(failTimer);
+    };
   }, [fontsLoaded]);
 
   useEffect(() => {
