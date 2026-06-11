@@ -2,6 +2,8 @@ import Constants from "expo-constants";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { router, Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
+import { useFonts } from "expo-font";
+import { Feather, MaterialCommunityIcons, Ionicons, MaterialIcons, FontAwesome } from "@expo/vector-icons";
 import * as Sentry from "@sentry/react-native";
 import React, { useEffect, useRef, useState } from "react";
 import { Animated, Easing, StyleSheet, Text, View } from "react-native";
@@ -80,13 +82,21 @@ function RootLayoutNav() {
 export default function RootLayout() {
   const foregroundSub = useRef<NotifSubscription | null>(null);
   const responseSub = useRef<NotifSubscription | null>(null);
+  const [fontsLoaded] = useFonts({
+    ...Feather.font,
+    ...MaterialCommunityIcons.font,
+    ...Ionicons.font,
+    ...MaterialIcons.font,
+    ...FontAwesome.font,
+  });
   const [showSplash, setShowSplash] = useState(true);
 
   useEffect(() => {
+    if (!fontsLoaded) return;
     SplashScreen.hideAsync().catch(() => {});
     const timer = setTimeout(() => setShowSplash(false), SPLASH_DURATION_MS);
     return () => clearTimeout(timer);
-  }, []);
+  }, [fontsLoaded]);
 
   useEffect(() => {
     // Skip all notification setup when running inside Expo Go.
