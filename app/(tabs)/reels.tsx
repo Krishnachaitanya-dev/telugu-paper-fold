@@ -261,11 +261,25 @@ const ReelCard = memo(function ReelCard({
       )}
 
       <LinearGradient
-        colors={["transparent", "rgba(0,0,0,0.55)", "rgba(0,0,0,0.88)"]}
-        locations={[0.45, 0.72, 1]}
+        colors={["transparent", "rgba(0,0,0,0.78)"]}
+        locations={[0.55, 1]}
         style={StyleSheet.absoluteFill}
         pointerEvents="none"
       />
+
+      {/* Floating mute toggle — top right */}
+      {isVisible ? (
+        <TouchableOpacity
+          onPress={toggleMute}
+          activeOpacity={0.75}
+          style={[styles.muteFloat, { top: insets.top + 56 }]}
+          accessibilityRole="button"
+          accessibilityLabel={muted ? "Unmute" : "Mute"}
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+        >
+          <Feather name={muted ? "volume-x" : "volume-2"} size={18} color="#fff" />
+        </TouchableOpacity>
+      ) : null}
 
       {isVisible && <SideActions reel={reel} muted={muted} onToggleMute={toggleMute} />}
 
