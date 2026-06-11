@@ -57,7 +57,7 @@ export default function Profile() {
               className="w-full flex items-center gap-3 px-4 py-3.5 text-left hover:bg-card-elevated transition"
             >
               <span className="h-9 w-9 rounded-xl bg-primary-soft text-primary grid place-items-center">
-                <Icon className="h-4.5 w-4.5" />
+                <Icon className="h-[18px] w-[18px]" />
               </span>
               <span className="flex-1 min-w-0">
                 <div className="font-bold text-sm">{label}</div>
