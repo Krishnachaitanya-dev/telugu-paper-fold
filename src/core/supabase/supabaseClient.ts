@@ -1,8 +1,17 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createClient } from '@supabase/supabase-js';
-import { env } from '../env/env';
+import { env, hasSupabaseConfig } from '../env/env';
 
 export { hasSupabaseConfig, assertSupabaseConfigured } from '../env/env';
+
+// Runtime visibility — log which Supabase project the app actually connects
+// to, so stale .env / cached-bundle issues are immediately obvious.
+if (typeof console !== 'undefined') {
+  // eslint-disable-next-line no-console
+  console.log(
+    `[Supabase] configured=${hasSupabaseConfig} url=${env.supabaseUrl || '(none)'}`,
+  );
+}
 
 export const supabase = createClient(
   env.supabaseUrl || 'https://placeholder.supabase.co',
