@@ -58,8 +58,12 @@ function TabIcon({
 
 function NewsTabIcon({ color, focused }: { color: string; focused: boolean }) {
   return (
-    <View style={[styles.newsIconWrap, focused && styles.newsIconWrapActive]}>
-      <SafeIcon name="book-open" size={20} color={color} />
+    <View style={[styles.iconWrap, focused && styles.iconWrapActive]}>
+      <Image
+        source={TAB_ICONS.news}
+        resizeMode="contain"
+        style={[styles.tabIcon, { width: 24, height: 24, tintColor: color }]}
+      />
     </View>
   );
 }
