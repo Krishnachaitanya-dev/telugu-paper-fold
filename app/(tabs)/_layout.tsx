@@ -1,9 +1,10 @@
 import { Tabs, router, usePathname } from "expo-router";
-import React, { useMemo } from "react";
+import React, { useEffect, useMemo } from "react";
 import { Image, PanResponder, Platform, StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { useColors } from "@/hooks/useColors";
+import { markTabsMounted } from "@/lib/tabMountStatus";
 
 const TAB_ICONS = {
   news:    require("../../assets/tab-icons/icon-news.png"),
