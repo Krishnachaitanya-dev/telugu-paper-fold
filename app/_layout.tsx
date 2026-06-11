@@ -259,6 +259,24 @@ function BrandedSplash() {
   );
 }
 
+function NavFallback() {
+  return (
+    <View style={styles.fallbackOverlay}>
+      <Text style={styles.fallbackTitle}>Taking longer than expected</Text>
+      <Text style={styles.fallbackSub}>
+        The app is having trouble loading the main screen. Check your connection and try again.
+      </Text>
+      <Text
+        style={styles.fallbackBtn}
+        onPress={() => router.replace("/(tabs)" as never)}
+        accessibilityRole="button"
+      >
+        Reload
+      </Text>
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
   splashOverlay: {
     ...StyleSheet.absoluteFillObject,
