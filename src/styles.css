@@ -1,0 +1,109 @@
+@import "tailwindcss";
+
+/* ─── Design tokens (dark, premium news) ───────────────────────────── */
+:root {
+  --background:      oklch(0.18 0.025 240);   /* deep navy */
+  --surface:         oklch(0.21 0.028 240);
+  --card:            oklch(0.24 0.032 240);
+  --card-elevated:   oklch(0.27 0.034 240);
+  --foreground:      oklch(0.97 0.005 240);
+  --muted:           oklch(0.28 0.02 240);
+  --muted-foreground:oklch(0.72 0.015 240);
+  --border:          oklch(0.32 0.025 240);
+  --input:           oklch(0.30 0.025 240);
+
+  --primary:         oklch(0.68 0.13 190);    /* teal */
+  --primary-foreground: oklch(0.99 0 0);
+  --primary-soft:    oklch(0.32 0.08 190);
+
+  --accent:          oklch(0.72 0.20 350);    /* hot pink */
+  --accent-foreground: oklch(0.99 0 0);
+
+  --live:            oklch(0.65 0.24 25);     /* live red */
+  --warning:         oklch(0.78 0.16 75);
+  --success:         oklch(0.72 0.17 155);
+
+  --radius:          14px;
+
+  --grad-primary:    linear-gradient(135deg, oklch(0.68 0.13 190), oklch(0.58 0.16 200));
+  --grad-accent:     linear-gradient(135deg, oklch(0.72 0.20 350), oklch(0.62 0.22 15));
+  --shadow-soft:     0 4px 16px -4px oklch(0 0 0 / 0.4);
+  --shadow-elev:     0 12px 32px -8px oklch(0 0 0 / 0.55);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-surface:    var(--surface);
+  --color-card:       var(--card);
+  --color-card-elevated: var(--card-elevated);
+  --color-foreground: var(--foreground);
+  --color-muted:      var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-border:     var(--border);
+  --color-input:      var(--input);
+  --color-primary:    var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary-soft: var(--primary-soft);
+  --color-accent:     var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-live:       var(--live);
+  --color-warning:    var(--warning);
+  --color-success:    var(--success);
+
+  --font-display: "Anek Telugu", "Inter", system-ui, sans-serif;
+  --font-body:    "Noto Sans Telugu", "Inter", system-ui, sans-serif;
+
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 22px;
+}
+
+* { border-color: var(--color-border); }
+
+html, body, #root { height: 100%; }
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+h1, h2, h3, .font-display { font-family: var(--font-display); letter-spacing: -0.01em; }
+
+/* Utility: hide scrollbar */
+@utility no-scrollbar {
+  scrollbar-width: none;
+  &::-webkit-scrollbar { display: none; }
+}
+
+/* Live red dot pulse */
+@utility live-dot {
+  position: relative;
+  &::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: 9999px;
+    background: var(--color-live);
+    animation: live-pulse 1.6s ease-out infinite;
+  }
+}
+@keyframes live-pulse {
+  0%   { transform: scale(1);   opacity: 0.7; }
+  100% { transform: scale(2.4); opacity: 0;   }
+}
+
+/* Reels snap */
+.snap-reels {
+  scroll-snap-type: y mandatory;
+  overscroll-behavior: contain;
+}
+.snap-reels > * { scroll-snap-align: start; scroll-snap-stop: always; }
+
+/* Soft fade-in for cards */
+@keyframes rise-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.rise-in { animation: rise-in 0.35s ease both; }
