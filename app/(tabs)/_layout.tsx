@@ -49,7 +49,7 @@ function TabIcon({
         resizeMode="contain"
         style={[
           styles.tabIcon,
-          { width: size, height: size, tintColor: color, opacity: focused ? 1 : 0.45 },
+          { width: size, height: size, tintColor: color },
         ]}
       />
     </View>
@@ -59,7 +59,7 @@ function TabIcon({
 function NewsTabIcon({ color, focused }: { color: string; focused: boolean }) {
   return (
     <View style={[styles.newsIconWrap, focused && styles.newsIconWrapActive]}>
-      <Feather name="book-open" size={20} color={color} style={{ opacity: focused ? 1 : 0.45 }} />
+      <Feather name="book-open" size={20} color={color} />
     </View>
   );
 }
