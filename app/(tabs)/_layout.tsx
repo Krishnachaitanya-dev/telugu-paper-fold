@@ -77,6 +77,8 @@ export default function TabLayout() {
   const pathname = usePathname();
   const isWeb   = Platform.OS === "web";
 
+  useEffect(() => { markTabsMounted("TabLayout"); }, []);
+
   const safeBottom  = isWeb ? 0 : Math.max(insets.bottom, Platform.OS === "android" ? 20 : 0);
   const tabBarHeight = isWeb ? 84 : 58 + safeBottom;
 
