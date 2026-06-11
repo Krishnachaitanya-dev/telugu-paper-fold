@@ -845,12 +845,27 @@ const styles = StyleSheet.create({
   },
   channelOptionTextActive: { color: "#fff" },
 
+  // Floating mute toggle (top-right of reel)
+  muteFloat: {
+    position: "absolute",
+    right: 14,
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: "rgba(0,0,0,0.55)",
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: "rgba(255,255,255,0.18)",
+    zIndex: 25,
+  },
+
   // Side action buttons
   sideActions: {
     position: "absolute",
     right: 14,
     bottom: 200,
-    gap: 20,
+    gap: 16,
     alignItems: "center",
     zIndex: 5,
   },
