@@ -451,7 +451,10 @@ export default function ReelsScreen() {
   const { data, isLoading, error, refetch } = useQuery({
     queryKey: ["reels"],
     queryFn: async () => {
+      console.log("[Reels] queryFn start");
+      const t0 = Date.now();
       const reels = await db.fetchReels();
+      console.log(`[Reels] fetched ${reels.length} reels in ${Date.now() - t0}ms`);
       if (reels.length > 0) {
         cacheReels(reels).then(() => setCache({ reels, cachedAt: new Date() }));
       }
@@ -463,6 +466,16 @@ export default function ReelsScreen() {
     refetchOnReconnect: false,
     retry: 1,
   });
+
+  useEffect(() => {
+    if (error) console.warn("[Reels] query error:", error);
+  }, [error]);
+
+  const onRefresh = useCallback(async () => {
+    console.log("[Reels] pull-to-refresh");
+    setRefreshing(true);
+    try { await refetch(); } finally { setRefreshing(false); }
+  }, [refetch]);
 
   const sourceData = data !== undefined ? data : cache.reels;
   const portraitData = useMemo(() => sourceData.filter(isPortraitReel), [sourceData]);
